@@ -26,6 +26,7 @@ html = html.replace('  <script src="js/app.js"></script>', '  <script src="deskt
 html = html.replace('</head>', '<style>a[href="index.html"]{display:none!important}</style></head>')
 (web / 'admin.html').write_text(html)
 shutil.copyfile(root / 'desktop.js', web / 'desktop.js')
+shutil.copyfile(root / 'Assets' / 'AppIcon.icns', contents / 'Resources' / 'AppIcon.icns')
 with (contents / 'Info.plist').open('wb') as file:
     plistlib.dump({
         'CFBundleExecutable': 'ByteStoreAdmin',
@@ -33,6 +34,7 @@ with (contents / 'Info.plist').open('wb') as file:
         'CFBundleName': 'ByteStore Admin',
         'CFBundleDisplayName': 'ByteStore Admin',
         'CFBundlePackageType': 'APPL',
+        'CFBundleIconFile': 'AppIcon',
         'CFBundleShortVersionString': '0.2.0',
         'CFBundleVersion': '2',
         'LSMinimumSystemVersion': '13.0',
