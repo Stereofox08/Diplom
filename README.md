@@ -59,3 +59,7 @@ node tests/shared-database.cjs
 ```
 
 Формат файла: `{"users":[{"email":"...","password":"...","admin":true},{"email":"qa-a@...","password":"...","admin":false},{"email":"qa-b@...","password":"...","admin":false}]}`. Сам файл в Git не добавляется. Для проверки приложения используется флаг `--smoke-test` и тот же файл через `BYTESTORE_SMOKE_CREDENTIALS`.
+
+## Windows-админка
+
+`windows-admin/` содержит Windows x64 приложение с тем же интерфейсом и общей базой, собственной иконкой и экспортом данных. Сборка и запуск описаны в `windows-admin/README.md`. Исходники Windows-админки исключены из GitHub Pages. Финальная сборка Electron 45 проверена в отдельной бутылке CrossOver: 60 товаров, вход администратора, отрисовка 10 разделов, восстановление сессии и выход. Результат — `windows-admin/verification.json`.

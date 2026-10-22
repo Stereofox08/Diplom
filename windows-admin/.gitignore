@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.crossover/
+app/web/
+app/icon.ico

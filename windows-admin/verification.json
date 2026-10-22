@@ -1,0 +1,15 @@
+{
+  "platform": "Windows x64 via CrossOver, Windows 10 x64 bottle",
+  "electron": "45.0.0",
+  "checks": {
+    "cloud": true,
+    "products": 60,
+    "login": true,
+    "bridge": "function",
+    "node": "undefined",
+    "panels": 10,
+    "persisted": true,
+    "ok": true
+  },
+  "mutations": "No product or order changes; isolated admin session signed out after test."
+}

@@ -4,6 +4,7 @@ exclude:
   - js/admin
   - css/admin.css
   - macos-admin
+  - windows-admin
   - supabase
   - tests
   - docs

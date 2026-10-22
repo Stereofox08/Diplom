@@ -9,3 +9,8 @@ test-results/
 playwright-report/
 *credentials*
 *passwords*
+
+windows-admin/dist/
+windows-admin/.crossover/
+windows-admin/app/web/
+windows-admin/app/icon.ico
