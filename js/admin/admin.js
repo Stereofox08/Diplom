@@ -58,7 +58,7 @@
       '<div data-login-error></div>' +
       '<button class="btn btn--primary btn--lg btn--block" type="submit">' + BS.icon('lock', { size: 18 }) +
       'Войти в панель</button></form>' +
-      '<div class="alert alert--info mt-4"' + (BS.cloud ? ' hidden' : '') + '><span class="alert__icon">ℹ️</span><div class="alert__body">' +
+      '<div class="alert alert--info mt-4"' + (BS.cloud ? ' style="display:none!important"' : '') + '><span class="alert__icon">ℹ️</span><div class="alert__body">' +
       '<strong>Данные для проверки проекта</strong><p>Логин <b class="mono">Admin</b>, пароль ' +
       '<b class="mono">1234</b>. После 5 неудачных попыток вход блокируется на 5 минут.</p></div></div>' +
       '<p class="muted small center mt-4"><a href="index.html">← Вернуться в магазин</a></p>' +

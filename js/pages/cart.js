@@ -129,6 +129,7 @@
     },
     /* --------------------------- Оформление заказа -------------------------- */
     openCheckout: function () {
+      if (BS.cloud && !BS.auth.isLoggedIn()) { BS.auth.requireLogin('cart.html'); return; }
       var self = this;
       var user = BS.auth.user();
       var totals = db.cartTotals(null, state.promo);
