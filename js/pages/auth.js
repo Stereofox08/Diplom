@@ -71,6 +71,11 @@
         '<p class="small mt-5 center">Нет аккаунта? <a href="register.html">Зарегистрируйтесь</a> — это займёт минуту.</p>' +
         (BS.cloud ? '' : '<p class="muted small center mt-2">Пароль демо-аккаунтов: <span class="mono">demo1234</span></p>') +
         '</div></div></div>';
+      if (BS.cloud && BS.cloud.confirmationError) {
+        var notice = document.createElement('p'); notice.className = 'alert alert--warn';
+        notice.textContent = BS.cloud.confirmationError;
+        root.querySelector('[data-login-error]').appendChild(notice);
+      }
       this.wire(root, next);
     },
     /* ------------------------------ Обработчики ----------------------------- */

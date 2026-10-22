@@ -108,6 +108,11 @@
   };
   async function acceptRedirect() {
     var params=new URLSearchParams(location.hash.slice(1));
+    if(params.has('error')) {
+      cloud.confirmationError = "\u0421\u0441\u044b\u043b\u043a\u0430 \u0443\u0436\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0430 \u0438\u043b\u0438 \u0441\u0440\u043e\u043a \u0435\u0451 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f \u0438\u0441\u0442\u0451\u043a. \u0415\u0441\u043b\u0438 \u043f\u043e\u0447\u0442\u0430 \u0443\u0436\u0435 \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0435\u043d\u0430, \u0432\u043e\u0439\u0434\u0438\u0442\u0435 \u0441 e-mail \u0438 \u043f\u0430\u0440\u043e\u043b\u0435\u043c.";
+      history.replaceState(null,'',location.pathname+location.search);
+      return;
+    }
     if(!params.has('access_token')) return;
     var token=params.get('access_token'),refreshToken=params.get('refresh_token');
     history.replaceState(null,'',location.pathname+location.search);
@@ -184,7 +189,7 @@
     if (!data.agree) errors.agree='Необходимо согласие с условиями';
     if(Object.keys(errors).length) return {ok:false,message:'Проверьте заполнение формы',errors:errors};
     try {
-      var value=await request('/auth/v1/signup',{method:'POST',noAuth:true,body:{email:data.email,password:data.password,data:{name:data.name,phone:data.phone}}});
+      var value=await request('/auth/v1/signup?redirect_to='+encodeURIComponent(config.authRedirectUrl),{method:'POST',noAuth:true,body:{email:data.email,password:data.password,data:{name:data.name,phone:data.phone}}});
       if(value.access_token){saveSession(value);await cloud.refresh();return {ok:true,message:'Аккаунт создан'};}
       return {ok:true,pendingConfirmation:true,message:'Проверьте почту и подтвердите e-mail, затем войдите в магазин.'};
     }catch(error){return {ok:false,message:error.message};}

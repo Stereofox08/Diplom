@@ -8,7 +8,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
  try{
   browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'});
   const page=await browser.newPage();let signups=0;
-  await page.route('**/auth/v1/signup',async route=>{signups++;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({user:{id:'test'}})});});
+  await page.route('**/auth/v1/signup?**',async route=>{signups++;assert.equal(new URL(route.request().url()).searchParams.get('redirect_to'),'https://stereofox08.github.io/Diplom/login.html');await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({user:{id:'test'}})});});
   const base='http://127.0.0.1:'+server.address().port;
   await page.goto(base+'/register.html',{waitUntil:'networkidle'});
   await page.locator('#rgName').fill('Тестовый покупатель');await page.locator('#rgEmail').fill('example@example.com');await page.locator('#rgPhone').fill('+77000000000');await page.locator('#rgPass').fill('TestPassword123');await page.locator('#rgPass2').fill('TestPassword123');
@@ -17,6 +17,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   await page.route('**/auth/v1/token?grant_type=password',route=>route.fulfill({status:400,contentType:'application/json',body:JSON.stringify({code:'email_not_confirmed',msg:'Email not confirmed'})}));
   await page.goto(base+'/login.html',{waitUntil:'networkidle'});await page.locator('#lnEmail').fill('example@example.com');await page.locator('#lnPass').fill('TestPassword123');await page.locator('[data-login-form] button[type=submit]').click();await page.waitForFunction(()=>document.querySelector('[data-login-error]').textContent.includes('Подтвердите e-mail'));
   assert.doesNotMatch(await page.locator('[data-login-error]').innerText(),/Email not confirmed/);
+  await page.goto(base+'/login.html?callback=1#error=access_denied&error_code=otp_expired',{waitUntil:'networkidle'});assert.equal(await page.evaluate(()=>location.hash),'');assert.ok((await page.locator('[data-login-error]').innerText()).length>20);
   console.log('PASS: confirmation state prevents repeat signup; login explains unconfirmed e-mail in Russian. No accounts or emails created.');
  }finally{if(browser)await browser.close();await new Promise(r=>server.close(r));}
 })().catch(e=>{console.error(e.stack);process.exit(1)});
