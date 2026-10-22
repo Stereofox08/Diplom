@@ -11,6 +11,7 @@
 
   pages.catalog = {
     filter: null,
+    filtersOpen: false,
 
     init: function () {
       var params = U.qsAll();
@@ -27,6 +28,8 @@
       };
       var root = U.$('#pageContent');
       if (!root) return;
+      this.filtersOpen = false;
+      this.filterMedia = window.matchMedia('(max-width: 1080px)');
       var title = this.filter.q ? 'Результаты поиска: «' + U.esc(this.filter.q) + '»'
         : this.filter.category ? U.esc((db.category(this.filter.category) || {}).name || 'Каталог')
           : 'Все комплектующие';
@@ -35,7 +38,7 @@
           { label: 'Главная', href: 'index.html' },
           { label: this.filter.category ? (db.category(this.filter.category) || {}).name || 'Каталог' : 'Каталог' }
         ]) +
-        '<div class="section-head mt-5">' +
+        '<div class="section-head mt-5 catalog-heading">' +
         '<div><div class="kicker">' + BS.icon('grid', { size: 14 }) + ' Каталог ByteStore</div>' +
         '<h1 style="font-size:var(--fs-2xl)">' + title + '</h1>' +
         '<p>' + (this.filter.category
@@ -46,17 +49,31 @@
         '<a class="btn btn--outline btn--sm" href="configurator.html">' + BS.icon('sparkles', { size: 16 }) +
         'Собрать ПК</a></div></div>' +
         '<div class="catalog-layout">' +
-        '<aside class="card card--pad-sm filters" id="catalogFilters"></aside>' +
-        '<div><div class="catalog-toolbar" id="catalogToolbar"></div>' +
+        '<div class="catalog-filter-column">' +
+        '<button class="catalog-filter-toggle" type="button" data-filters-toggle ' +
+        'aria-controls="catalogFilters" aria-expanded="false">' +
+        BS.icon('sliders', { size: 18 }) + '<span>Фильтры</span>' +
+        '<span class="catalog-filter-toggle__count" data-filter-count hidden></span>' +
+        '<span class="catalog-filter-toggle__chevron">' + BS.icon('chevron-down', { size: 18 }) + '</span></button>' +
+        '<aside class="card card--pad-sm filters" id="catalogFilters" aria-label="Фильтры каталога"></aside></div>' +
+        '<div class="catalog-results"><div class="catalog-toolbar" id="catalogToolbar"></div>' +
         '<div class="active-filters" id="activeFilters"></div>' +
         '<div id="catalogGrid"></div>' +
         '<div id="catalogPagination"></div></div>' +
         '</div></div>';
       this.render();
       this.wire(root);
+      var self = this;
+      this.filterMedia.addEventListener('change', function () { self.syncFilterPanel(); });
     },
     render: function () {
       var self = this;
+      var focused = document.activeElement;
+      var focusAttr = focused && focused.getAttributeNames ? focused.getAttributeNames().filter(function (name) {
+        return name.indexOf('data-filter') === 0;
+      })[0] : '';
+      var focusValue = focusAttr ? focused.getAttribute(focusAttr) : '';
+      var selectionStart = focusAttr === 'data-filter-q' ? focused.selectionStart : null;
       var result = db.query(Object.assign({}, this.filter, { perPage: PER_PAGE }));
       var facets = db.facets(this.filter);
 
@@ -82,9 +99,9 @@
         '<span>Все категории</span><span class="filters__count">' + db.productsAll().length + '</span></button>' +
         categoryItems + '</div></div>' +
         '<div class="filters__group"><div class="filters__title">Цена, ₸</div>' +
-        '<div class="row gap-2"><input class="input input--sm" type="number" placeholder="от ' + facets.priceMin +
+        '<div class="catalog-price-range"><input class="input input--sm" type="number" min="0" aria-label="Цена от, тенге" placeholder="от ' + facets.priceMin +
         '" value="' + (this.filter.min || '') + '" data-filter-min>' +
-        '<input class="input input--sm" type="number" placeholder="до ' + facets.priceMax + '" value="' +
+        '<input class="input input--sm" type="number" min="0" aria-label="Цена до, тенге" placeholder="до ' + facets.priceMax + '" value="' +
         (this.filter.max || '') + '" data-filter-max></div>' +
         '<button class="btn btn--soft btn--sm btn--block mt-3" data-filter-price>Применить цену</button></div>' +
         (brandItems ? '<div class="filters__group"><div class="filters__title">Бренды</div>' +
@@ -93,7 +110,9 @@
         '<label class="switch"><input type="checkbox" data-filter-stock' + (this.filter.inStock ? ' checked' : '') +
         '><span>Только в наличии</span></label>' +
         '<label class="switch mt-3"><input type="checkbox" data-filter-discount' +
-        (this.filter.onlyDiscount ? ' checked' : '') + '><span>Со скидкой</span></label></div>';
+        (this.filter.onlyDiscount ? ' checked' : '') + '><span>Со скидкой</span></label></div>' +
+        '<div class="catalog-filter-apply"><button class="btn btn--primary btn--block" type="button" data-filters-close>' +
+        'Показать ' + result.total + ' ' + U.plural(result.total, 'товар', 'товара', 'товаров') + '</button></div>';
 
       /* ------------------------- Панель сортировки --------------------------- */
       var sortOptions = Object.keys(db.SORTS).map(function (key) {
@@ -101,17 +120,48 @@
           U.esc(db.SORTS[key].label) + '</option>';
       }).join('');
       U.$('#catalogToolbar').innerHTML =
-        '<div class="catalog-toolbar__info">Найдено <b>' + result.total + '</b> ' +
+        '<div class="catalog-toolbar__info" role="status">Найдено <b>' + result.total + '</b> ' +
         U.plural(result.total, 'товар', 'товара', 'товаров') +
         (result.pages > 1 ? ' · страница ' + result.page + ' из ' + result.pages : '') + '</div>' +
-        '<div class="row gap-3 center wrap">' +
-        '<label class="input-icon">' + BS.icon('search', { size: 16 }) +
-        '<input class="input input--sm" style="padding-left:38px;min-width:220px" ' +
-        'placeholder="Поиск в каталоге…" value="' + U.attr(this.filter.q) + '" data-filter-q></label>' +
-        '<select class="select input--sm" data-filter-sort>' + sortOptions + '</select>' +
-        '</div>';
+        '<div class="catalog-toolbar__controls">' +
+        '<label class="input-icon catalog-search"><span class="visually-hidden">Поиск в каталоге</span>' + BS.icon('search', { size: 16 }) +
+        '<input class="input input--sm" type="search" ' +
+        'placeholder="Название, модель или бренд" value="' + U.attr(this.filter.q) + '" data-filter-q></label>' +
+        '<label class="catalog-sort"><span class="catalog-sort__label">Сортировка</span>' +
+        '<select class="select input--sm" data-filter-sort>' + sortOptions + '</select></label></div>';
 
       this.renderResults(result);
+      this.syncFilterPanel();
+      if (focusAttr) {
+        var replacement = Array.prototype.find.call(document.querySelectorAll('[' + focusAttr + ']'), function (el) {
+          return el.getAttribute(focusAttr) === focusValue;
+        });
+        if (replacement) {
+          replacement.focus({ preventScroll: true });
+          if (selectionStart !== null) replacement.setSelectionRange(selectionStart, selectionStart);
+        }
+      }
+    },
+    /** На узких экранах фильтры раскрываются по запросу, на широких видны всегда. */
+    syncFilterPanel: function () {
+      var panel = U.$('#catalogFilters');
+      var toggle = U.$('[data-filters-toggle]');
+      if (!panel || !toggle) return;
+      var expanded = !this.filterMedia.matches || this.filtersOpen;
+      panel.hidden = !expanded;
+      toggle.setAttribute('aria-expanded', String(expanded));
+      var count = (this.filter.category ? 1 : 0) + this.filter.brands.length +
+        (this.filter.min || this.filter.max ? 1 : 0) + (this.filter.inStock ? 1 : 0) +
+        (this.filter.onlyDiscount ? 1 : 0);
+      var counter = toggle.querySelector('[data-filter-count]');
+      counter.textContent = count;
+      counter.hidden = !count;
+    },
+    closeFilters: function () {
+      this.filtersOpen = false;
+      this.syncFilterPanel();
+      var toggle = U.$('[data-filters-toggle]');
+      if (toggle) toggle.focus({ preventScroll: true });
     },
     /** Активные фильтры, сетка товаров и пагинация. */
     renderResults: function (result) {
@@ -174,12 +224,20 @@
       this.syncUrl();
       this.render();
       var grid = U.$('#catalogGrid');
-      if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (grid && !(this.filterMedia.matches && this.filtersOpen)) {
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     },
     /* ------------------------------ Обработчики ----------------------------- */
     wire: function (root) {
       var self = this;
       root.addEventListener('click', function (e) {
+        if (e.target.closest('[data-filters-toggle]')) {
+          self.filtersOpen = !self.filtersOpen;
+          self.syncFilterPanel();
+          return;
+        }
+        if (e.target.closest('[data-filters-close]')) { self.closeFilters(); return; }
         var category = e.target.closest('[data-filter-category]');
         if (category) { self.change({ category: category.getAttribute('data-filter-category') }); return; }
 
@@ -223,6 +281,13 @@
         if (page && !page.disabled) {
           var number = Number(page.getAttribute('data-page'));
           if (number >= 1) self.change({ page: number });
+        }
+      });
+
+      root.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && self.filterMedia.matches && self.filtersOpen) {
+          e.preventDefault();
+          self.closeFilters();
         }
       });
 

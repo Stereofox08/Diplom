@@ -12,118 +12,129 @@
     init: function () {
       var root = U.$('#pageContent');
       if (!root) return;
-      var stats = db.analytics(30);
       var productsCount = db.productsAll().length;
       var categoriesCount = db.categories().length;
 
+      root.classList.add('home-page');
       root.innerHTML =
-        this.hero(stats, productsCount, categoriesCount) +
+        this.hero(productsCount, categoriesCount) +
         this.features() +
-        '<section class="section section--tight"><div class="container">' +
-        L.sectionHead('Каталог', 'Выберите категорию комплектующих',
-          'Более ' + productsCount + ' позиций в ' + categoriesCount + ' категориях: от бюджетных сборок до 4K-станций.',
-          '<a class="btn btn--outline btn--sm" href="catalog.html">Весь каталог ' +
-          BS.icon('arrow-right', { size: 16 }) + '</a>') +
-        '<div class="grid-auto">' + db.categories().map(function (c) { return C.categoryTile(c); }).join('') +
-        '</div></div></section>' +
+        this.categoriesBlock(productsCount, categoriesCount) +
         this.hitsAndNew() +
         this.aiBlock() +
         this.readyBuilds() +
         this.reviewsBlock() +
         this.blogAndCta();
 
-      this.wire(root, stats);
+      this.wire(root);
     },
 
-    hero: function (stats, productsCount, categoriesCount) {
-      var top = db.recommended(1)[0];
-      return '<section class="hero"><div class="container"><div class="hero__grid">' +
-        '<div><span class="hero__eyebrow">' + BS.icon('sparkles', { size: 14 }) +
-        ' ИИ-подбор комплектующих</span>' +
-        '<h1>Соберите идеальный компьютер <span class="grad-text">за пару минут</span></h1>' +
-        '<p class="hero__lead">ByteStore — магазин компьютерных комплектующих с интеллектуальным конфигуратором. ' +
-        'Искусственный интеллект подберёт процессор, видеокарту и память под ваш бюджет и задачи, ' +
-        'автоматически проверит совместимость сокетов, тип памяти и мощность блока питания.</p>' +
-        '<div class="hero__cta">' +
-        '<a class="btn btn--primary btn--lg" href="configurator.html">' +
-        BS.icon('tool', { size: 18 }) + 'Открыть конфигуратор</a>' +
-        '<a class="btn btn--outline btn--lg" href="catalog.html">Смотреть каталог</a>' +
-        '</div>' +
-        '<div class="hero__stats">' +
-        '<div class="hero__stat"><strong>' + productsCount + '</strong><span>товаров на складе</span></div>' +
-        '<div class="hero__stat"><strong>' + categoriesCount + '</strong><span>категорий</span></div>' +
-        '<div class="hero__stat"><strong>' + U.num(stats.itemsSold) + '</strong><span>продано за 30 дней</span></div>' +
-        '<div class="hero__stat"><strong>' + (stats.avgRating || '4.7') + '★</strong><span>средняя оценка</span></div>' +
-        '</div></div>' +
-        '<div class="hero__visual"><div class="hero-card">' +
-        '<div class="between mb-4"><b>Пример подбора ИИ</b><span class="ai-badge">' +
-        BS.icon('robot', { size: 12 }) + ' ByteStore AI</span></div>' +
-        (top ? '<div class="hero-card__row"><span>Хит продаж</span><b>' + U.esc(top.name.slice(0, 34)) + '…</b></div>' : '') +
-        '<div class="hero-card__row"><span>Бюджет покупателя</span><b>600 000 ₸</b></div>' +
-        '<div class="hero-card__row"><span>Задача</span><b>Игры в 1440p</b></div>' +
-        '<div class="hero-card__row"><span>Совместимость</span><b class="text-ok">проверена ✓</b></div>' +
-        '<div class="hero-card__row"><span>Пиковое потребление</span><b>292 Вт</b></div>' +
-        '<div class="hero-card__row"><span>Блок питания</span><b>750 Вт (запас 122 %)</b></div>' +
-        '<div class="hero-card__row"><span>Прогноз</span><span class="hero-card__tag">≈ 87 FPS в 1440p</span></div>' +
-        '<a class="btn btn--soft btn--block mt-4" href="configurator.html">Собрать так же</a>' +
-        '</div></div>' +
+    hero: function (productsCount, categoriesCount) {
+      var builds = db.byCategory('prebuilt');
+      var featured = builds.filter(function (product) { return product.id === 'pc-gaming-pro'; })[0] || builds[0];
+      var available = db.productsAll().filter(function (product) { return product.stock > 0; }).length;
+      return '<section class="home-hero"><div class="container"><div class="home-hero__grid">' +
+        '<div class="home-hero__copy"><span class="home-kicker">' + BS.icon('sparkles', { size: 15 }) +
+        ' Комплектующие. Возможности. Ваш ПК.</span>' +
+        '<h1>Больше мощности.<br><span class="grad-text">Больше вашего.</span></h1>' +
+        '<p class="home-hero__lead">Для побед, больших идей и работы без пауз. Найдите нужную деталь ' +
+        'или соберите компьютер под свои задачи — с проверкой совместимости.</p>' +
+        '<div class="home-hero__actions">' +
+        '<a class="btn btn--primary btn--lg" href="catalog.html">Перейти в каталог ' +
+        BS.icon('arrow-right', { size: 18 }) + '</a>' +
+        '<a class="btn btn--outline btn--lg" href="configurator.html">' + BS.icon('tool', { size: 18 }) + 'Собрать свой ПК</a></div>' +
+        '<div class="home-hero__facts">' +
+        '<div><strong>' + productsCount + '</strong><span>товаров в каталоге</span></div>' +
+        '<div><strong>' + categoriesCount + '</strong><span>категорий</span></div>' +
+        '<div><strong>' + available + '</strong><span>позиций в наличии</span></div></div></div>' +
+        (featured ? '<a class="home-showcase" href="product.html?id=' + U.attr(featured.id) + '">' +
+          '<div class="home-showcase__head"><span>Готов к следующему уровню</span>' +
+          '<span class="home-showcase__label">ByteStore PC</span></div>' +
+          '<div class="home-showcase__art">' + BS.art(featured) + '</div>' +
+          '<div class="home-showcase__info"><div><span class="home-kicker">Готовая сборка</span>' +
+          '<h2>' + U.esc(featured.name.replace(/^Игровой ПК /, '').split(':')[0]) + '</h2>' +
+          '<p>' + U.esc((featured.key || []).slice(0, 3).join(' / ')) + '</p></div>' +
+          '<div class="home-showcase__price"><strong>' + U.money(featured.price) + '</strong>' +
+          '<span>Подробнее ' + BS.icon('arrow-right', { size: 16 }) + '</span></div></div></a>' : '') +
         '</div></div></section>';
     },
 
     features: function () {
       var items = [
-        { icon: 'robot', title: 'ИИ-конфигуратор', text: 'Нейросеть объясняет выбор каждой детали и следит за совместимостью.' },
-        { icon: 'shield', title: 'Проверка совместимости', text: 'Сокет, DDR4/DDR5, мощность БП и габариты корпуса — 10 правил.' },
-        { icon: 'truck', title: 'Доставка 1–2 дня', text: 'Своя логистика по Алматы и Астане, 90+ пунктов выдачи.' },
-        { icon: 'award', title: 'Гарантия до 3 лет', text: 'Официальные поставки и бесплатная диагностика при обращении.' }
+        { icon: 'check-circle', title: 'Детали подружатся', text: 'Проверяем совместимость вашей сборки.' },
+        { icon: 'truck', title: 'Бережная доставка', text: 'По Алматы, Астане и всему Казахстану.' },
+        { icon: 'shield', title: 'Гарантия до 3 лет', text: 'Поможем с диагностикой и обращением.' },
+        { icon: 'robot', title: 'Помощь с выбором', text: 'Подберём комплектующие под ваш бюджет.' }
       ];
-      return '<section class="section section--tight"><div class="container"><div class="grid-4">' +
-        items.map(function (item) {
-          return '<div class="feature reveal"><span class="feature__icon">' + BS.icon(item.icon, { size: 26 }) + '</span>' +
-            '<h4>' + U.esc(item.title) + '</h4><p>' + U.esc(item.text) + '</p></div>';
+      return '<section class="home-services" aria-label="Преимущества ByteStore"><div class="container">' +
+        '<div class="home-services__grid">' + items.map(function (item) {
+          return '<div class="home-service"><span class="home-service__icon">' + BS.icon(item.icon, { size: 22 }) +
+            '</span><div><h3>' + U.esc(item.title) + '</h3><p>' + U.esc(item.text) + '</p></div></div>';
         }).join('') + '</div></div></section>';
     },
 
+    categoriesBlock: function (productsCount, categoriesCount) {
+      return '<section class="section home-categories"><div class="container">' +
+        L.sectionHead('Всё для вашего ПК', 'Начните с нужной детали',
+          productsCount + ' товаров в ' + categoriesCount + ' категориях. От первого апгрейда до новой сборки.',
+          '<a class="btn btn--outline btn--sm" href="catalog.html">Весь каталог ' + BS.icon('arrow-right', { size: 16 }) + '</a>') +
+        '<div class="home-categories__grid">' + db.categories().map(function (category) {
+          var products = db.byCategory(category.id);
+          var minPrice = products.length ? Math.min.apply(null, products.map(function (product) { return product.price; })) : 0;
+          return '<a class="home-category" href="catalog.html?category=' + U.attr(category.id) + '">' +
+            '<span class="home-category__icon">' + BS.icon(category.icon, { size: 25 }) + '</span>' +
+            '<span class="home-category__body"><strong>' + U.esc(category.name) + '</strong>' +
+            '<span>' + products.length + ' ' + U.plural(products.length, 'товар', 'товара', 'товаров') +
+            (minPrice ? ' · от ' + U.money(minPrice) : '') + '</span></span>' +
+            BS.icon('arrow-right', { size: 16, cls: 'home-category__arrow' }) + '</a>';
+        }).join('') +
+        '<a class="home-category home-category--builder" href="configurator.html">' +
+        '<span class="home-category__icon">' + BS.icon('sparkles', { size: 25 }) + '</span>' +
+        '<span class="home-category__body"><strong>Собрать всё вместе</strong><span>Открыть конфигуратор</span></span>' +
+        BS.icon('arrow-right', { size: 16, cls: 'home-category__arrow' }) + '</a>' +
+        '</div></div></section>';
+    },
+
     hitsAndNew: function () {
-      var hits = db.recommended(8);
+      var hits = db.recommended(4);
       var fresh = db.newArrivals(4);
-      return '<section class="section section--tight"><div class="container">' +
-        L.sectionHead('Хиты продаж', 'Чаще всего покупают',
-          'Товары с лучшими отзывами и стабильным спросом за последние месяцы.',
+      return '<section class="section home-products"><div class="container">' +
+        L.sectionHead('Проверенный выбор', 'В центре внимания',
+          'Популярные комплектующие для следующего апгрейда.',
           '<a class="btn btn--outline btn--sm" href="catalog.html?sort=popular">Все популярные</a>') +
         C.grid(hits) +
-        '<div class="mt-8">' + L.sectionHead('Новинки', 'Только что поступило',
+        '<div class="home-new-arrivals">' + L.sectionHead('Новинки', 'Только что поступило',
           'Свежие поступления склада ByteStore.') + C.grid(fresh) + '</div>' +
         '</div></section>';
     },
     /* ------------------- Живой блок ИИ-подбора на главной ------------------- */
     aiBlock: function () {
-      return '<section class="section"><div class="container"><div class="cta-banner">' +
-        '<div><span class="hero__eyebrow">' + BS.icon('robot', { size: 14 }) + ' Демонстрация ИИ</span>' +
-        '<h2>Опишите задачу — ассистент соберёт конфигурацию</h2>' +
-        '<p>Выберите бюджет и назначение ПК — ByteStore подберёт совместимые комплектующие и объяснит ' +
-        'выбор каждой детали: сокеты, тип памяти, мощность блока питания и габариты корпуса проверяются автоматически.</p>' +
-        '<div class="row gap-3 wrap mt-5" data-home-purposes>' +
-        BS.advisor.PURPOSES.map(function (p) {
-          return '<button class="chip' + (p.id === 'gaming' ? ' is-active' : '') + '" data-home-purpose="' +
-            p.id + '">' + p.emoji + ' ' + U.esc(p.label) + '</button>';
-        }).join('') + '</div>' +
-        '<div class="field mt-4"><span class="label">Целевое разрешение</span>' +
-        '<div class="row gap-2 wrap" data-home-resolutions>' +
-        BS.advisor.RESOLUTIONS.map(function (res) {
-          return '<button class="chip' + (res.id === '1080p' ? ' is-active' : '') +
-            '" data-home-resolution="' + res.id + '">🖥️ ' + U.esc(res.label) + '</button>';
+      return '<section class="section home-advisor"><div class="container"><div class="home-advisor__panel">' +
+        '<div class="home-advisor__intro"><span class="home-kicker">' + BS.icon('sparkles', { size: 15 }) + ' Конфигуратор ByteStore</span>' +
+        '<h2>Ваши задачи.<br>Наша сборка.</h2>' +
+        '<p>Игры, работа или творчество — подберём совместимые детали в пределах бюджета и объясним выбор.</p>' +
+        '<a href="configurator.html" class="home-text-link">Настроить каждую деталь ' + BS.icon('arrow-right', { size: 16 }) + '</a>' +
+        '<div class="home-advisor__note">' + BS.icon('check-circle', { size: 19 }) +
+        '<span>Сокет, память, питание и габариты проверяются автоматически</span></div></div>' +
+        '<div class="home-advisor__form"><div class="field"><span class="label">Для чего нужен компьютер?</span>' +
+        '<div class="home-advisor__chips" data-home-purposes>' +
+        BS.advisor.PURPOSES.map(function (purpose) {
+          return '<button type="button" class="chip' + (purpose.id === 'gaming' ? ' is-active' : '') +
+            '" aria-pressed="' + (purpose.id === 'gaming' ? 'true' : 'false') + '" data-home-purpose="' + purpose.id + '">' + U.esc(purpose.label) + '</button>';
         }).join('') + '</div></div>' +
-        '<div class="row gap-4 wrap mt-5 center">' +
-        '<div style="min-width:280px;flex:1 1 280px">' +
-        '<label class="label" for="homeBudget">Бюджет: <b data-home-budget-label>600 000 ₸</b></label>' +
-        '<input type="range" id="homeBudget" min="200000" max="2000000" step="25000" value="600000" data-home-budget></div>' +
-        '<button class="btn btn--primary" data-home-build>' + BS.icon('sparkles', { size: 18 }) +
-        'Подобрать сборку</button></div></div>' +
-        '<div class="cta-banner__art">🤖</div>' +
-        '</div>' +
-        '<div class="card mt-5" id="homeBuildResult" hidden></div>' +
-        '</div></section>';
+        '<div class="field"><span class="label">Разрешение экрана</span>' +
+        '<div class="home-advisor__chips" data-home-resolutions>' +
+        BS.advisor.RESOLUTIONS.map(function (resolution) {
+          return '<button type="button" class="chip' + (resolution.id === '1080p' ? ' is-active' : '') +
+            '" aria-pressed="' + (resolution.id === '1080p' ? 'true' : 'false') + '" data-home-resolution="' + resolution.id + '">' + U.esc(resolution.label) + '</button>';
+        }).join('') + '</div></div>' +
+        '<div class="field home-advisor__budget"><label class="label" for="homeBudget">Ваш бюджет</label>' +
+        '<strong data-home-budget-label>600 000 ₸</strong>' +
+        '<input type="range" id="homeBudget" min="200000" max="2000000" step="25000" value="600000" data-home-budget>' +
+        '<div class="home-advisor__range"><span>200 000 ₸</span><span>2 000 000 ₸</span></div></div>' +
+        '<button class="btn btn--primary btn--block" data-home-build>' + BS.icon('sparkles', { size: 18 }) +
+        'Подобрать мою сборку</button></div></div>' +
+        '<div class="card mt-5" id="homeBuildResult" hidden></div></div></section>';
     },
     /** Запуск подбора и отрисовка результата прямо на главной странице. */
     renderHomeBuild: function () {
@@ -208,7 +219,7 @@
     readyBuilds: function () {
       var ready = db.byCategory('prebuilt').slice(0, 3);
       if (!ready.length) return '';
-      return '<section class="section section--tight"><div class="container">' +
+      return '<section class="section section--tight home-ready-builds"><div class="container">' +
         L.sectionHead('Готовые решения', 'Собрано, протестировано, готово к работе',
           'Специалисты ByteStore собирают ПК, устанавливают драйверы и тестируют под нагрузкой 24 часа.',
           '<a class="btn btn--outline btn--sm" href="catalog.html?category=prebuilt">Все сборки</a>') +
@@ -221,7 +232,7 @@
       return '<section class="section section--tight"><div class="container">' +
         L.sectionHead('Отзывы', 'Что говорят покупатели',
           'Средняя оценка ' + (db.analytics(90).avgRating || '4.7') + ' из 5 по ' +
-          db.reviews({ status: 'published' }).length + ' отзывам. Все отзывы проходят модерацию в админ-панели.') +
+          db.reviews({ status: 'published' }).length + ' отзывам покупателей ByteStore.') +
         '<div class="grid-3">' + reviews.map(function (r) {
           return '<div class="card">' + C.review(r, {
             actions: '<a class="small" href="product.html?id=' + U.attr(r.productId) + '">К товару →</a>'
@@ -249,8 +260,8 @@
         '</div>' +
         '</div>' +
         '</div>' +
-        '<div class="cta-banner mt-6"><div><h2>Зарегистрируйтесь и получите 10 000 бонусов</h2>' +
-        '<p>Личный кабинет хранит историю заказов, отзывы и избранное. Бонусами можно оплатить до 30 % заказа.</p></div>' +
+        '<div class="cta-banner home-account-cta mt-6"><div><span class="home-kicker">Личный кабинет</span><h2>Всё о ваших покупках — в одном месте</h2>' +
+        '<p>Создайте аккаунт, чтобы оформлять заказы, следить за их статусом и делиться отзывами.</p></div>' +
         '<div class="col gap-3"><a class="btn btn--primary" href="register.html">Создать аккаунт</a>' +
         '<a class="btn btn--outline" href="login.html">У меня уже есть аккаунт</a></div></div>' +
         '</div></section>';
@@ -266,14 +277,22 @@
       root.addEventListener('click', function (e) {
         var chip = e.target.closest('[data-home-purpose]');
         if (chip) {
-          U.$$('[data-home-purpose]').forEach(function (node) { node.classList.remove('is-active'); });
+          U.$$('[data-home-purpose]').forEach(function (node) {
+            node.classList.remove('is-active');
+            node.setAttribute('aria-pressed', 'false');
+          });
           chip.classList.add('is-active');
+          chip.setAttribute('aria-pressed', 'true');
           return;
         }
         var resolution = e.target.closest('[data-home-resolution]');
         if (resolution) {
-          U.$$('[data-home-resolution]').forEach(function (node) { node.classList.remove('is-active'); });
+          U.$$('[data-home-resolution]').forEach(function (node) {
+            node.classList.remove('is-active');
+            node.setAttribute('aria-pressed', 'false');
+          });
           resolution.classList.add('is-active');
+          resolution.setAttribute('aria-pressed', 'true');
           return;
         }
         if (e.target.closest('[data-home-build]')) pages.home.renderHomeBuild();

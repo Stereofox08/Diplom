@@ -99,7 +99,7 @@
       (user
         ? '<a class="user-chip" href="account.html"><span class="user-chip__ava">' + BS.auth.initials(user.name) +
           '</span><span class="name">' + U.esc(BS.auth.firstName()) + '</span></a>'
-        : '<a class="btn btn--primary btn--sm" href="login.html">' + BS.icon('user', { size: 16 }) + 'Войти</a>') +
+        : '<a class="btn btn--primary btn--sm header-auth" href="login.html" aria-label="Войти в аккаунт">' + BS.icon('user', { size: 16 }) + '<span class="header-auth-label">Войти</span></a>') +
       '<button class="icon-btn burger" data-burger aria-label="Меню">' + BS.icon('menu', { size: 22 }) + '</button>' +
       '</div></div></header>';
   };

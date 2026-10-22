@@ -62,7 +62,14 @@
     var color2 = cat.color2 || '#8b5cf6';
     var gid = 'bg_' + String(product.id || Math.random()).replace(/[^a-z0-9]/gi, '');
     var labels = (product.key || []).slice(0, 2).join(' · ');
+    if (labels.length > 33) labels = labels.slice(0, 30).trim() + '…';
     var body = BS.icons[cat.icon] || BS.icons['box'];
+    if (product.categoryId === 'prebuilt') {
+      body = '<rect x="3" y="1" width="18" height="21" rx="2"/>' +
+        '<path d="M15 1v21M6 5h6v11H6zM5 22v1m14-1v1M7 18h4"/>' +
+        '<g stroke-width="1"><circle cx="18" cy="6" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>' +
+        '<path d="m17 5 2 2m-2 4 2 2m-2 4 2 2M7 8h4m-4 2h4m-4 2h4"/></g>';
+    }
     return '' +
       '<svg viewBox="0 0 320 240" role="img" aria-label="' + alt + '" xmlns="http://www.w3.org/2000/svg">' +
       '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="1" y2="1">' +
@@ -74,7 +81,7 @@
       '<g transform="translate(112,74) scale(4)" fill="none" stroke="' + color +
       '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' + body + '</g>' +
       (labels ? '<text x="160" y="216" text-anchor="middle" font-family="ui-monospace, monospace" ' +
-        'font-size="15" fill="' + color + '" fill-opacity=".85">' + BS.util.esc(labels) + '</text>' : '') +
+        'font-size="13" fill="' + color + '" fill-opacity=".85">' + BS.util.esc(labels) + '</text>' : '') +
       '</svg>';
   };
 })();

@@ -1,0 +1,130 @@
+/* Catalog controls keep their width independent of product names and filters. */
+body[data-page="catalog"] .catalog-heading { align-items: flex-end; gap: 24px; }
+body[data-page="catalog"] .catalog-heading > div:first-child { min-width: 0; max-width: 760px; }
+body[data-page="catalog"] .catalog-heading h1 { overflow-wrap: anywhere; margin-top: 12px; }
+body[data-page="catalog"] .catalog-heading p { max-width: 680px; line-height: 1.65; }
+body[data-page="catalog"] .catalog-layout {
+  grid-template-columns: 256px minmax(0, 1fr);
+  gap: 24px;
+}
+.catalog-filter-column, .catalog-results, #catalogGrid, #catalogPagination { min-width: 0; }
+.catalog-filter-column { position: sticky; top: calc(var(--header-h) + 20px); }
+body[data-page="catalog"] .filters {
+  position: static;
+  max-height: calc(100dvh - var(--header-h) - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  border-radius: 14px;
+  padding: 18px;
+}
+body[data-page="catalog"] .filters[hidden] { display: none !important; }
+.catalog-filter-toggle, .catalog-filter-apply { display: none; }
+body[data-page="catalog"] .filters .panel-head { margin-bottom: 0; gap: 8px; }
+body[data-page="catalog"] .filters__group { min-width: 0; padding: 20px 0; }
+body[data-page="catalog"] .filters__item { min-height: 40px; padding: 9px 10px; }
+body[data-page="catalog"] .filters__item > span:first-child { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+body[data-page="catalog"] .filters__count { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+body[data-page="catalog"] .filters .check { min-height: 34px; }
+body[data-page="catalog"] .filters .switch { min-height: 28px; }
+.catalog-price-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.catalog-price-range input { min-width: 0; }
+body[data-page="catalog"] .catalog-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  margin-bottom: 16px;
+}
+body[data-page="catalog"] .catalog-toolbar__info { line-height: 1.5; }
+body[data-page="catalog"] .catalog-toolbar__info b { color: var(--text); font-weight: 750; }
+.catalog-toolbar__controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 220px); gap: 12px; align-items: end; }
+.catalog-toolbar__controls > *, .catalog-toolbar__controls input, .catalog-toolbar__controls select { min-width: 0; width: 100%; }
+.catalog-search { display: block; }
+.catalog-search .input { min-height: 44px; padding-right: 12px; }
+.catalog-sort { display: grid; gap: 6px; }
+.catalog-sort__label { font-size: 11px; font-weight: 650; color: var(--text-3); }
+.catalog-sort .select { min-height: 44px; }
+body[data-page="catalog"] .active-filters { gap: 8px; margin-bottom: 18px; }
+body[data-page="catalog"] .active-filters:empty { display: none; }
+body[data-page="catalog"] .active-filters .chip {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  overflow-wrap: anywhere;
+  min-height: 34px;
+}
+#catalogGrid { scroll-margin-top: calc(var(--header-h) + 20px); }
+#catalogGrid .grid-cards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 232px), 1fr)); }
+body[data-page="catalog"] .pagination { gap: 6px; flex-wrap: wrap; }
+body[data-page="catalog"] .pagination button { min-width: 40px; min-height: 40px; }
+
+@media (max-width: 1080px) {
+  body[data-page="catalog"] .catalog-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .catalog-filter-column { position: static; }
+  .catalog-filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    color: var(--text);
+    background: var(--surface);
+    font-weight: 650;
+    cursor: pointer;
+    text-align: left;
+  }
+  .catalog-filter-toggle > svg { color: var(--accent); }
+  .catalog-filter-toggle__count {
+    display: grid;
+    place-items: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 6px;
+    background: var(--surface-3);
+    color: var(--accent);
+    font-size: 12px;
+  }
+  .catalog-filter-toggle__count[hidden] { display: none; }
+  .catalog-filter-toggle__chevron { display: flex; margin-left: auto; transition: transform var(--t-fast); }
+  .catalog-filter-toggle[aria-expanded="true"] .catalog-filter-toggle__chevron { transform: rotate(180deg); }
+  .catalog-filter-toggle[aria-expanded="true"] { border-color: var(--accent); }
+  body[data-page="catalog"] .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 24px;
+    max-height: none;
+    overflow: visible;
+    margin-top: 10px;
+    padding: 18px;
+  }
+  body[data-page="catalog"] .filters__list { max-height: 220px; }
+  .catalog-filter-apply { display: block; grid-column: 1 / -1; padding-top: 8px; }
+  .catalog-filter-apply .btn { min-height: 44px; }
+}
+
+@media (max-width: 600px) {
+  body[data-page="catalog"] .catalog-heading { align-items: flex-start; gap: 16px; }
+  body[data-page="catalog"] .catalog-heading .btn-group { width: 100%; }
+  body[data-page="catalog"] .catalog-heading .btn { min-height: 42px; }
+  body[data-page="catalog"] .catalog-toolbar { padding: 14px; gap: 12px; }
+  .catalog-toolbar__controls { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .catalog-search .input, .catalog-sort .select { font-size: 16px; }
+  .catalog-sort { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; }
+  .catalog-sort__label { font-size: 12px; }
+  body[data-page="catalog"] .filters { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  body[data-page="catalog"] .filters__group { padding: 18px 0; }
+  body[data-page="catalog"] .filters__item { min-height: 44px; }
+  body[data-page="catalog"] .filters .check { min-height: 40px; }
+  body[data-page="catalog"] .filters .switch { min-height: 32px; }
+  #catalogGrid .grid-cards { gap: 16px; }
+}
+@media (max-width: 700px) {
+  #catalogGrid .grid-cards { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+}
