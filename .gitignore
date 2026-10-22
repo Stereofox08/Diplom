@@ -1,0 +1,11 @@
+.DS_Store
+.vscode/
+.env
+.env.*
+!.env.example
+node_modules/
+macos-admin/dist/
+test-results/
+playwright-report/
+*credentials*
+*passwords*

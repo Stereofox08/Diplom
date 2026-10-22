@@ -205,7 +205,7 @@
       var self = this;
       var root = this.root;
 
-      root.addEventListener('click', function (e) {
+      root.addEventListener('click', async function (e) {
         var nav = e.target.closest('[data-account-nav]');
         if (nav) {
           self.section = nav.getAttribute('data-account-nav');
@@ -214,7 +214,7 @@
           return;
         }
         if (e.target.closest('[data-logout]')) {
-          BS.auth.logout();
+          await BS.auth.logout();
           window.location.href = 'index.html';
           return;
         }
@@ -222,7 +222,7 @@
         if (received) {
           var order = db.order(received.getAttribute('data-order-received'));
           if (!order) return;
-          db.setOrderStatus(order.id, 'delivered', 'Покупатель подтвердил получение');
+          await db.setOrderStatus(order.id, 'delivered', 'Покупатель подтвердил получение');
           L.toastOk('Статус заказа обновлён: получен', order.number);
           self.render();
           return;
@@ -230,9 +230,9 @@
         var reviewDelete = e.target.closest('[data-review-delete]');
         if (reviewDelete) {
           L.confirm('Удалить отзыв без возможности восстановления?', { danger: true, confirmText: 'Удалить' })
-            .then(function (yes) {
+            .then(async function (yes) {
               if (!yes) return;
-              db.deleteReview(reviewDelete.getAttribute('data-review-delete'));
+              await db.deleteReview(reviewDelete.getAttribute('data-review-delete'));
               L.toast('Отзыв удалён', 'info');
               self.render();
             });
@@ -240,7 +240,7 @@
         }
         if (e.target.closest('[data-review-like]')) {
           var likeId = e.target.closest('[data-review-like]').getAttribute('data-review-like');
-          var likeResult = db.likeReview(likeId);
+          var likeResult = await db.likeReview(likeId);
           if (likeResult) {
             e.target.closest('[data-review-like]').textContent =
               'Полезно · ' + likeResult.likes;
@@ -250,9 +250,9 @@
         var reviewDelete = e.target.closest('[data-review-delete]');
         if (reviewDelete) {
           L.confirm('Удалить отзыв без возможности восстановления?', { danger: true, confirmText: 'Удалить' })
-            .then(function (yes) {
+            .then(async function (yes) {
               if (!yes) return;
-              db.deleteReview(reviewDelete.getAttribute('data-review-delete'));
+              await db.deleteReview(reviewDelete.getAttribute('data-review-delete'));
               L.toast('Отзыв удалён', 'info');
               self.render();
             });
@@ -260,11 +260,11 @@
         }
       });
 
-      root.addEventListener('submit', function (e) {
+      root.addEventListener('submit', async function (e) {
         e.preventDefault();
         if (e.target.closest('[data-profile-form]')) {
           var profileData = new FormData(e.target);
-          var result = BS.auth.updateProfile({
+          var result = await BS.auth.updateProfile({
             name: profileData.get('name'),
             phone: profileData.get('phone'),
             email: profileData.get('email'),
@@ -283,7 +283,7 @@
         if (e.target.closest('[data-password-form]')) {
           var passwordData = new FormData(e.target);
           BS.auth.changePassword(passwordData.get('current'), passwordData.get('next'), passwordData.get('next2'))
-            .then(function (result) {
+            .then(async function (result) {
               if (result.ok) {
                 L.toastOk(result.message, 'Пароль обновлён');
                 e.target.reset();

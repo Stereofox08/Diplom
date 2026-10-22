@@ -214,10 +214,10 @@
         e.preventDefault(); first.focus();
       }
     }
-    backdrop.addEventListener('click', function (e) {
+    backdrop.addEventListener('click', async function (e) {
       if (e.target === backdrop && options.closable !== false) close();
     });
-    modal.addEventListener('click', function (e) {
+    modal.addEventListener('click', async function (e) {
       if (e.target.closest('[data-close]')) close();
     });
     document.addEventListener('keydown', onKey);
@@ -238,7 +238,7 @@
           '<button class="btn ' + (options.danger ? 'btn--danger' : 'btn--primary') + '" data-yes>' +
           U.esc(options.confirmText || 'Подтвердить') + '</button>'
       });
-      instance.el.addEventListener('click', function (e) {
+      instance.el.addEventListener('click', async function (e) {
         if (e.target.closest('[data-yes]')) { resolve(true); instance.close(); }
         else if (e.target.closest('[data-close]')) resolve(false);
       });
@@ -263,11 +263,11 @@
         resolve(value);
         instance.close();
       }
-      instance.el.addEventListener('click', function (e) {
+      instance.el.addEventListener('click', async function (e) {
         if (e.target.closest('[data-ok]')) submit();
         else if (e.target.closest('[data-close]')) resolve(null);
       });
-      instance.el.addEventListener('keydown', function (e) {
+      instance.el.addEventListener('keydown', async function (e) {
         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit();
       });
     });
@@ -313,7 +313,7 @@
       }
     }
     document.addEventListener('keydown', onKey);
-    backdrop.addEventListener('click', function (e) {
+    backdrop.addEventListener('click', async function (e) {
       if (e.target.closest('[data-close]') || e.target === backdrop) close();
     });
     var firstField = drawer.querySelector('input, select, textarea, button:not([data-close]), a[href]');
@@ -405,7 +405,7 @@
           'Оформить заказ</a>'
         : ''
     });
-    instance.el.addEventListener('click', function (e) {
+    instance.el.addEventListener('click', async function (e) {
       var row = e.target.closest('[data-line]');
       if (!row) return;
       var id = row.getAttribute('data-line');
@@ -557,7 +557,7 @@
   };
   /* --------------------------- Глобальные обработчики --------------------- */
   function wireDelegation() {
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
       var themeBtn = e.target.closest('[data-theme-toggle]');
       if (themeBtn) { L.toggleTheme(); return; }
 
@@ -610,7 +610,7 @@
 
       var shareBtn = e.target.closest('[data-share]');
       if (shareBtn) {
-        U.copyText(shareBtn.getAttribute('data-share') || window.location.href).then(function (ok) {
+        U.copyText(shareBtn.getAttribute('data-share') || window.location.href).then(async function (ok) {
           L.toast(ok ? 'Ссылка скопирована' : 'Не удалось скопировать ссылку', ok ? 'ok' : 'danger');
         });
         return;
@@ -644,8 +644,8 @@
     if (!input) return;
     var run = U.debounce(function () { L.renderSuggest(input.value); }, 180);
     input.addEventListener('input', run);
-    input.addEventListener('focus', function () { if (input.value.length > 1) L.renderSuggest(input.value); });
-    input.addEventListener('keydown', function (e) {
+    input.addEventListener('focus', async function () { if (input.value.length > 1) L.renderSuggest(input.value); });
+    input.addEventListener('keydown', async function (e) {
       if (e.key === 'Enter') {
         var value = input.value.trim();
         if (value) window.location.href = 'catalog.html?q=' + encodeURIComponent(value);
@@ -654,7 +654,7 @@
         if (box) box.classList.add('hide');
       }
     });
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
       var box = U.$('#searchSuggest');
       if (!box) return;
       var row = e.target.closest('[data-suggest-product]');
@@ -671,7 +671,7 @@
   function wireScrollAndMenu() {
     var toTop = U.el('<button class="to-top" aria-label="Наверх">' + BS.icon('arrow-up', { size: 20 }) + '</button>');
     document.body.appendChild(toTop);
-    toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+    toTop.addEventListener('click', async function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
     var onScroll = U.throttle(function () {
       var y = window.scrollY || document.documentElement.scrollTop;
       toTop.classList.toggle('is-on', y > 600);
@@ -683,7 +683,7 @@
 
     var burger = U.$('[data-burger]');
     if (burger) {
-      burger.addEventListener('click', function () {
+      burger.addEventListener('click', async function () {
         var user = BS.auth.user();
         var nav = L.NAV.map(function (item) {
           return '<a href="' + item.href + '"' + (L.isActive(item.href) ? ' class="is-active"' : '') + '>' +
@@ -701,9 +701,9 @@
             '<a href="cart.html">' + BS.icon('cart', { size: 19 }) + 'Корзина (' + db.cartCount() + ')</a>' +
             actions + '</nav>'
         });
-        drawer.el.addEventListener('click', function (e) {
+        drawer.el.addEventListener('click', async function (e) {
           if (e.target.closest('[data-logout]')) {
-            BS.auth.logout();
+            await BS.auth.logout();
             window.location.href = 'index.html';
             return;
           }
@@ -732,7 +732,7 @@
     document.documentElement.setAttribute('data-theme', L.theme());
     var newsletter = U.$('[data-newsletter]');
     if (newsletter) {
-      newsletter.addEventListener('submit', function (e) {
+      newsletter.addEventListener('submit', async function (e) {
         e.preventDefault();
         var email = newsletter.querySelector('input').value;
         var error = BS.auth.validateEmail(email);

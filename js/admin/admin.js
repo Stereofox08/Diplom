@@ -50,7 +50,7 @@
       '<div class="field"><label for="adLogin">Логин</label>' +
       '<div class="input-icon">' + BS.icon('user', { size: 17 }) +
       '<input class="input" id="adLogin" name="login" required autocomplete="username" ' +
-      'value="Admin" placeholder="Администратор"></div></div>' +
+      'value="' + (BS.cloud ? '' : 'Admin') + '" placeholder="' + (BS.cloud ? 'E-mail администратора' : 'Администратор') + '"></div></div>' +
       '<div class="field"><label for="adPass">Пароль</label>' +
       '<div class="input-icon">' + BS.icon('lock', { size: 17 }) +
       '<input class="input" id="adPass" name="password" type="password" required ' +
@@ -58,20 +58,20 @@
       '<div data-login-error></div>' +
       '<button class="btn btn--primary btn--lg btn--block" type="submit">' + BS.icon('lock', { size: 18 }) +
       'Войти в панель</button></form>' +
-      '<div class="alert alert--info mt-4"><span class="alert__icon">ℹ️</span><div class="alert__body">' +
+      '<div class="alert alert--info mt-4"' + (BS.cloud ? ' hidden' : '') + '><span class="alert__icon">ℹ️</span><div class="alert__body">' +
       '<strong>Данные для проверки проекта</strong><p>Логин <b class="mono">Admin</b>, пароль ' +
       '<b class="mono">1234</b>. После 5 неудачных попыток вход блокируется на 5 минут.</p></div></div>' +
       '<p class="muted small center mt-4"><a href="index.html">← Вернуться в магазин</a></p>' +
       '</div></div>';
 
     var form = admin.root.querySelector('[data-admin-login]');
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', async function (e) {
       e.preventDefault();
       var button = form.querySelector('button[type="submit"]');
       var errorBox = admin.root.querySelector('[data-login-error]');
       var data = new FormData(form);
       button.classList.add('is-loading');
-      db.adminLogin(data.get('login'), data.get('password')).then(function (result) {
+      db.adminLogin(data.get('login'), data.get('password')).then(async function (result) {
         button.classList.remove('is-loading');
         if (!result.ok) {
           errorBox.innerHTML = '<div class="alert alert--danger"><span class="alert__icon">⚠️</span>' +
@@ -455,7 +455,7 @@
     return rows.join('\r\n');
   }
 
-  function importPhotoCsv(text) {
+  async function importPhotoCsv(text) {
     var products = db.productsAll(true), bySku = {};
     products.forEach(function (product) { bySku[String(product.sku).toLowerCase()] = product; });
     var updated = 0, unknown = 0, invalid = 0;
@@ -473,9 +473,18 @@
       if (!image) return;
       if (!/^(https?:\/\/|\/(?!\/)|\.\/)/i.test(image)) { invalid++; return; }
       product.image = image;
+      product.__photoChanged = true;
       product.updatedAt = Date.now();
       updated++;
     });
+    if (updated && BS.cloud) {
+      for (var photoProduct of products) {
+        if (photoProduct.__photoChanged) {
+          delete photoProduct.__photoChanged;
+          await db.saveProduct(photoProduct);
+        }
+      }
+    }
     if (updated) {
       db.audit('Обновлены фотографии товаров: ' + updated, 'admin');
       db.save();
@@ -483,13 +492,13 @@
     return { updated: updated, unknown: unknown, invalid: invalid };
   }
 
-  function savePhotoUrl(product, value) {
+  async function savePhotoUrl(product, value) {
     var url = String(value || '').trim();
     if (url && !/^(https?:\/\/|\/(?!\/)|\.\/)/i.test(url)) {
       L.toast('Укажите прямую ссылку http(s) или путь к файлу сайта', 'warn', 'Проверьте ссылку');
       return;
     }
-    var result = db.saveProduct(Object.assign({}, product, { image: url }));
+    var result = await db.saveProduct(Object.assign({}, product, { image: url }));
     if (!result.ok) { L.toastError(result.message); return; }
     L.toastOk(url ? 'Фотография назначена товару' : 'Фотография удалена');
     admin.show('images');
@@ -499,7 +508,7 @@
     U.$$('[data-photo-card]').forEach(function (card) {
       var image = card.querySelector('.admin-photo-card__preview img');
       if (!image) return;
-      image.addEventListener('error', function () {
+      image.addEventListener('error', async function () {
         image.parentNode.innerHTML = '<span class="admin-photo-preview-fallback">Не удалось загрузить изображение</span>';
       }, { once: true });
     });
@@ -1064,7 +1073,7 @@
       '</div>' +
       '<div class="settings-row mt-4"><div class="settings-row__text">' +
       '<b>Демонстрационные данные</b><span>Сбросить каталог, заказы и отзывы к исходному состоянию</span></div>' +
-      '<button class="btn btn--outline btn--sm" data-admin-reset>Сбросить</button></div>' +
+      '<button class="btn btn--outline btn--sm" data-admin-reset' + (BS.cloud ? ' disabled title="Общую базу нельзя сбросить к демо-данным"' : '') + '>Сбросить</button></div>' +
       '<div class="settings-row"><div class="settings-row__text">' +
       '<b>Полный экспорт базы</b><span>Выгрузка всей системы в JSON для отчёта по диплому</span></div>' +
       '<button class="btn btn--outline btn--sm" data-admin-export="json">Скачать JSON</button></div>' +
@@ -1124,7 +1133,7 @@
       if (ui.panel === 'images') wirePhotoPreviews();
     };
 
-    layout.addEventListener('click', function (e) {
+    layout.addEventListener('click', async function (e) {
       var navBtn = e.target.closest('[data-admin-panel]');
       if (navBtn) {
         admin.show(navBtn.getAttribute('data-admin-panel'));
@@ -1132,12 +1141,13 @@
         return;
       }
       if (e.target.closest('[data-admin-logout]')) {
-        db.adminLogout();
+        await db.adminLogout();
         L.toast('Сессия администратора завершена', 'info');
         renderLogin();
         return;
       }
       if (e.target.closest('[data-admin-refresh]')) {
+        if (BS.cloud) await BS.cloud.refresh();
         admin.show(ui.panel);
         L.toast('Данные обновлены', 'info');
         return;
@@ -1169,9 +1179,9 @@
       if (exportBtn) { exportData(exportBtn.getAttribute('data-admin-export')); return; }
       if (e.target.closest('[data-admin-reset]')) {
         L.confirm('Сбросить все данные магазина к демонстрационным? Текущие товары, заказы и отзывы будут удалены.',
-          { danger: true, confirmText: 'Сбросить данные' }).then(function (yes) {
+          { danger: true, confirmText: 'Сбросить данные' }).then(async function (yes) {
           if (!yes) return;
-          db.resetDemo().then(function () {
+          db.resetDemo().then(async function () {
             L.toastOk('Демонстрационные данные восстановлены', 'Готово');
             renderShell();
           });
@@ -1186,14 +1196,14 @@
       if (editProduct) { openProductForm(db.product(editProduct.getAttribute('data-product-edit'))); return; }
       var copyProduct = e.target.closest('[data-product-copy]');
       if (copyProduct) {
-        var copy = db.duplicateProduct(copyProduct.getAttribute('data-product-copy'));
+        var copy = await db.duplicateProduct(copyProduct.getAttribute('data-product-copy'));
         if (copy) { L.toastOk('Создана копия: ' + copy.name, 'Товар дублирован'); admin.show('products'); }
         return;
       }
       var toggleProduct = e.target.closest('[data-product-toggle]');
       if (toggleProduct) {
         var target = db.product(toggleProduct.getAttribute('data-product-toggle'));
-        db.saveProduct(Object.assign({}, target, { status: target.status === 'hidden' ? 'active' : 'hidden' }));
+        await db.saveProduct(Object.assign({}, target, { status: target.status === 'hidden' ? 'active' : 'hidden' }));
         L.toast('Статус товара изменён', 'info');
         admin.show('products');
         return;
@@ -1202,9 +1212,9 @@
       if (deleteProduct) {
         var product = db.product(deleteProduct.getAttribute('data-product-delete'));
         L.confirm('Удалить товар «' + product.name + '»? Отзывы о товаре тоже будут удалены.',
-          { danger: true, confirmText: 'Удалить' }).then(function (yes) {
+          { danger: true, confirmText: 'Удалить' }).then(async function (yes) {
           if (!yes) return;
-          db.deleteProduct(product.id);
+          await db.deleteProduct(product.id);
           L.toastOk('Товар удалён из каталога', 'Готово');
           admin.show('products');
         });
@@ -1219,9 +1229,9 @@
       if (deleteCategory) {
         var category = db.category(deleteCategory.getAttribute('data-category-delete'));
         L.confirm('Удалить категорию «' + category.name + '»?', { danger: true, confirmText: 'Удалить' })
-          .then(function (yes) {
+          .then(async function (yes) {
             if (!yes) return;
-            var result = db.deleteCategory(category.id);
+            var result = await db.deleteCategory(category.id);
             if (result.ok) { L.toastOk(result.message); admin.show('categories'); }
             else L.toastError(result.message);
           });
@@ -1235,9 +1245,9 @@
       if (deleteOrder) {
         var order = db.order(deleteOrder.getAttribute('data-order-delete'));
         L.confirm('Удалить заказ ' + order.number + ' из системы?', { danger: true, confirmText: 'Удалить' })
-          .then(function (yes) {
+          .then(async function (yes) {
             if (!yes) return;
-            db.deleteOrder(order.id);
+            await db.deleteOrder(order.id);
             L.toastOk('Заказ удалён', 'Готово');
             admin.show('orders');
           });
@@ -1250,7 +1260,7 @@
       var togglePromo = e.target.closest('[data-promo-toggle]');
       if (togglePromo) {
         var promo = db.findPromo(togglePromo.getAttribute('data-promo-toggle'));
-        db.savePromo(Object.assign({}, promo, { active: !promo.active, id: promo.code }));
+        await db.savePromo(Object.assign({}, promo, { active: !promo.active, id: promo.code }));
         L.toast('Промокод ' + promo.code + (promo.active ? ' отключён' : ' активирован'), 'info');
         admin.show('promos');
         return;
@@ -1259,9 +1269,9 @@
       if (deletePromo) {
         var promoCode = deletePromo.getAttribute('data-promo-delete');
         L.confirm('Удалить промокод ' + promoCode + '?', { danger: true, confirmText: 'Удалить' })
-          .then(function (yes) {
+          .then(async function (yes) {
             if (!yes) return;
-            db.deletePromo(promoCode);
+            await db.deletePromo(promoCode);
             L.toastOk('Промокод удалён', 'Готово');
             admin.show('promos');
           });
@@ -1277,14 +1287,14 @@
       }
       var publish = e.target.closest('[data-review-publish]');
       if (publish) {
-        db.setReviewStatus(publish.getAttribute('data-review-publish'), 'published');
+        await db.setReviewStatus(publish.getAttribute('data-review-publish'), 'published');
         L.toastOk('Отзыв опубликован — рейтинг товара пересчитан', 'Модерация');
         admin.show('reviews');
         return;
       }
       var reject = e.target.closest('[data-review-reject]');
       if (reject) {
-        db.setReviewStatus(reject.getAttribute('data-review-reject'), 'rejected');
+        await db.setReviewStatus(reject.getAttribute('data-review-reject'), 'rejected');
         L.toast('Отзыв скрыт с витрины', 'info');
         admin.show('reviews');
         return;
@@ -1298,9 +1308,9 @@
           text: 'Ответ увидят все покупатели на странице товара.',
           value: review.reply || '',
           placeholder: 'Спасибо за отзыв! Уточните, пожалуйста…'
-        }).then(function (text) {
+        }).then(async function (text) {
           if (text === null) return;
-          db.replyReview(reviewId, text);
+          await db.replyReview(reviewId, text);
           db.audit('Добавлен ответ магазина на отзыв ' + (review.author || 'гостя'), 'admin');
           db.save();
           L.toastOk('Ответ сохранён', 'Готово');
@@ -1313,9 +1323,9 @@
       var deleteReview = e.target.closest('[data-review-delete]');
       if (deleteReview) {
         L.confirm('Удалить отзыв без возможности восстановления?', { danger: true, confirmText: 'Удалить' })
-          .then(function (yes) {
+          .then(async function (yes) {
             if (!yes) return;
-            db.deleteReview(deleteReview.getAttribute('data-review-delete'));
+            await db.deleteReview(deleteReview.getAttribute('data-review-delete'));
             L.toastOk('Отзыв удалён', 'Готово');
             admin.show('reviews');
           });
@@ -1328,7 +1338,7 @@
       var blockUser = e.target.closest('[data-user-block]');
       if (blockUser) {
         var user = db.user(blockUser.getAttribute('data-user-block'));
-        db.setUserStatus(user.id, user.status === 'blocked' ? 'active' : 'blocked');
+        await db.setUserStatus(user.id, user.status === 'blocked' ? 'active' : 'blocked');
         L.toast('Пользователь ' + user.email +
           (user.status === 'blocked' ? ' заблокирован' : ' разблокирован'), 'info');
         admin.show('users');
@@ -1338,9 +1348,9 @@
       if (deleteUser) {
         var userTarget = db.user(deleteUser.getAttribute('data-user-delete'));
         L.confirm('Удалить аккаунт ' + userTarget.email + '? Заказы останутся в истории.',
-          { danger: true, confirmText: 'Удалить' }).then(function (yes) {
+          { danger: true, confirmText: 'Удалить' }).then(async function (yes) {
           if (!yes) return;
-          db.deleteUser(userTarget.id);
+          await db.deleteUser(userTarget.id);
           L.toastOk('Аккаунт удалён', 'Готово');
           admin.show('users');
         });
@@ -1349,7 +1359,7 @@
       if (e.target.closest('[data-admin-ai-test]')) {
         var testBox = layout.querySelector('[data-admin-ai-result]');
         testBox.innerHTML = L.loading('Проверяю доступные бесплатные модели…');
-        BS.ai.test().then(function (result) {
+        BS.ai.test().then(async function (result) {
           testBox.innerHTML = '<div class="alert alert--' + (result.ok ? 'ok' : 'warn') + '">' +
             '<span class="alert__icon">' + (result.ok ? '✅' : '⚠️') + '</span><div class="alert__body">' +
             '<strong>' + (result.ok ? 'Модель выбрана автоматически' : 'Рабочая модель не найдена') +
@@ -1371,7 +1381,7 @@
   /** Обработчики модальных окон и живых фильтров админки. */
   function wireModalForms() {
     var layout = admin.layout;
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', async function (e) {
       if (e.target.closest('[data-spec-add]')) {
         var editor = U.$('[data-spec-editor]');
         if (editor) editor.insertAdjacentHTML('beforeend', specRow('', ''));
@@ -1386,6 +1396,7 @@
         var currentOrder = db.order(saveOrderId);
         var commentField = U.$('#ordComment');
         currentOrder.managerComment = commentField ? commentField.value : '';
+        if (BS.cloud) await db.updateOrderComment(currentOrder.id, currentOrder.managerComment);
         db.audit('Комментарий к заказу ' + currentOrder.number, 'admin');
         db.save();
         L.toastOk('Комментарий сохранён');
@@ -1394,9 +1405,9 @@
       if (e.target.closest('[data-order-cancel]')) {
         var cancelId = e.target.closest('[data-order-cancel]').getAttribute('data-order-cancel');
         L.confirm('Отменить заказ? Статус изменится на «Отменён».',
-          { danger: true, confirmText: 'Отменить заказ' }).then(function (yes) {
+          { danger: true, confirmText: 'Отменить заказ' }).then(async function (yes) {
           if (!yes) return;
-          db.setOrderStatus(cancelId, 'cancelled', 'Отменён администратором');
+          await db.setOrderStatus(cancelId, 'cancelled', 'Отменён администратором');
           L.toast('Заказ отменён', 'info');
           admin.show('orders');
         });
@@ -1404,7 +1415,7 @@
     });
 
     /* Живые фильтры и переключатели */
-    layout.addEventListener('input', function (e) {
+    layout.addEventListener('input', async function (e) {
       if (e.target.closest('[data-photo-search]')) {
         ui.photoQuery = e.target.value;
         var normalized = U.norm(ui.photoQuery);
@@ -1427,7 +1438,7 @@
           var image = document.createElement('img');
           image.src = url;
           image.alt = card.getAttribute('data-photo-name') || 'Фото товара';
-          image.addEventListener('error', function () {
+          image.addEventListener('error', async function () {
             preview.innerHTML = '<span class="admin-photo-preview-fallback">Не удалось загрузить изображение</span>';
           }, { once: true });
           preview.replaceChildren(image);
@@ -1458,7 +1469,7 @@
       }
     });
 
-    layout.addEventListener('change', function (e) {
+    layout.addEventListener('change', async function (e) {
       if (e.target.closest('[data-admin-days]')) {
         ui.days = Number(e.target.value);
         admin.show(ui.panel);
@@ -1477,8 +1488,8 @@
       var photoFile = e.target.closest('[data-photo-import]');
       if (photoFile && photoFile.files && photoFile.files[0]) {
         var reader = new FileReader();
-        reader.onload = function () {
-          var result = importPhotoCsv(reader.result);
+        reader.onload = async function () {
+          var result = await importPhotoCsv(reader.result);
           if (!result.updated) {
             L.toast('Ссылки не импортированы. Проверьте формат: артикул;ссылка', 'warn', 'CSV не изменён');
           } else {
@@ -1495,25 +1506,25 @@
       }
       var stock = e.target.closest('[data-stock-input]');
       if (stock) {
-        db.updateStock(stock.getAttribute('data-stock-input'), stock.value);
+        await db.updateStock(stock.getAttribute('data-stock-input'), stock.value);
         L.toast('Остаток обновлён: ' + stock.value + ' шт.', 'info');
         return;
       }
       var status = e.target.closest('[data-order-status]');
       if (status) {
-        db.setOrderStatus(status.getAttribute('data-order-status'), status.value);
+        await db.setOrderStatus(status.getAttribute('data-order-status'), status.value);
         L.toast('Статус заказа изменён: ' + db.ORDER_STATUS[status.value].label, 'ok');
       }
     });
 
     /* Формы: ключ ИИ, смена пароля */
-    layout.addEventListener('submit', function (e) {
+    layout.addEventListener('submit', async function (e) {
       var aiForm = e.target.closest('[data-admin-ai-form]');
       if (aiForm) {
         e.preventDefault();
         var data = new FormData(aiForm);
         var apiKey = String(data.get('apiKey') || '').trim();
-        db.updateAiSettings({
+        await db.updateAiSettings({
           apiKey: apiKey,
           enabled: data.get('enabled') === 'on',
           verifiedAt: null,        // после смены ключа модель выбирается заново
@@ -1533,7 +1544,7 @@
         }
         if (resultBox) resultBox.innerHTML = L.loading('Ключ сохранён. Ищу и проверяю бесплатные модели…');
         L.toast('Ключ сохранён, подбираю рабочую модель…', 'info', 'ByteStore AI');
-        BS.ai.test().then(function (result) {
+        BS.ai.test().then(async function (result) {
           if (result.ok) L.toastOk('Модель выбрана: ' + BS.ai.shortModel(result.model), 'ИИ готов к работе');
           else L.toastError(result.message, 'Рабочая модель не найдена');
           admin.show('ai');
@@ -1548,7 +1559,7 @@
     document.body.classList.remove('is-locked');
   }
 
-  function saveProductForm() {
+  async function saveProductForm() {
     var form = U.$('[data-product-form]');
     if (!form) return;
     var data = new FormData(form);
@@ -1561,8 +1572,9 @@
         : value === 'true' ? true : value === 'false' ? false : value;
     });
     var id = data.get('id');
-    var result = db.saveProduct({
+    var result = await db.saveProduct(Object.assign({}, id ? db.product(id) : {}, {
       id: id || null,
+      revision: id && db.product(id) ? db.product(id).revision : null,
       name: data.get('name'),
       categoryId: data.get('categoryId'),
       brand: data.get('brand'),
@@ -1577,18 +1589,18 @@
       key: String(data.get('key') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
       badges: String(data.get('badges') || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
       specs: specs
-    });
+    }));
     if (!result.ok) { L.toastError(result.message); return; }
     closeModal();
     L.toastOk(result.message, id ? 'Изменения сохранены' : 'Товар добавлен');
     admin.show('products');
   }
 
-  function saveCategoryForm() {
+  async function saveCategoryForm() {
     var form = U.$('[data-category-form]');
     if (!form) return;
     var data = new FormData(form);
-    var result = db.saveCategory({
+    var result = await db.saveCategory({
       id: data.get('id') || null,
       name: data.get('name'),
       emoji: data.get('emoji'),
@@ -1605,11 +1617,11 @@
     renderShell();
   }
 
-  function savePromoForm() {
+  async function savePromoForm() {
     var form = U.$('[data-promo-form]');
     if (!form) return;
     var data = new FormData(form);
-    var result = db.savePromo({
+    var result = await db.savePromo({
       id: data.get('code'),
       code: data.get('code'),
       type: data.get('type'),
@@ -1643,11 +1655,11 @@
       footer: '<button class="btn" data-close>Отмена</button>' +
         '<button class="btn btn--primary" data-review-save="' + U.attr(review.id) + '">Сохранить</button>'
     });
-    instance.el.addEventListener('click', function (e) {
+    instance.el.addEventListener('click', async function (e) {
       if (!e.target.closest('[data-review-save]')) return;
       var form = instance.el.querySelector('[data-review-edit-form]');
       var data = new FormData(form);
-      db.updateReview(review.id, {
+      await db.updateReview(review.id, {
         rating: Number(data.get('rating')),
         text: String(data.get('text')).trim(),
         reply: String(data.get('reply') || '').trim()
@@ -1677,12 +1689,12 @@
       footer: '<button class="btn" data-close>Отмена</button>' +
         '<button class="btn btn--primary" data-password-save>Обновить пароль</button>'
     });
-    instance.el.addEventListener('click', function (e) {
+    instance.el.addEventListener('click', async function (e) {
       if (!e.target.closest('[data-password-save]')) return;
       var form = instance.el.querySelector('[data-admin-password-form]');
       var data = new FormData(form);
       if (data.get('next') !== data.get('next2')) { L.toast('Новые пароли не совпадают', 'warn'); return; }
-      db.changeAdminPassword(data.get('current'), data.get('next')).then(function (result) {
+      db.changeAdminPassword(data.get('current'), data.get('next')).then(async function (result) {
         if (!result.ok) { L.toastError(result.message); return; }
         instance.close();
         L.toastOk(result.message, 'Безопасность');

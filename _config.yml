@@ -1,0 +1,11 @@
+# Only the customer storefront is published on GitHub Pages.
+exclude:
+  - admin.html
+  - js/admin
+  - css/admin.css
+  - macos-admin
+  - supabase
+  - tests
+  - docs
+  - README.md
+  - .vscode

@@ -166,7 +166,7 @@
     /* ------------------------------ Обработчики ----------------------------- */
     wire: function (root, product) {
       var self = this;
-      root.addEventListener('click', function (e) {
+      root.addEventListener('click', async function (e) {
         var qtyBtn = e.target.closest('[data-qty]');
         if (qtyBtn) {
           var block = qtyBtn.closest('[data-product-block]') || root;
@@ -199,7 +199,7 @@
         }
         var like = e.target.closest('[data-review-like]');
         if (like) {
-          var result = db.likeReview(like.getAttribute('data-review-like'));
+          var result = await db.likeReview(like.getAttribute('data-review-like'));
           if (result) {
             like.classList.toggle('text-accent', result.liked);
             like.innerHTML = BS.icon('thumbs-up', { size: 14 }) + 'Полезно · ' + result.likes;
@@ -207,14 +207,14 @@
         }
       });
 
-      root.addEventListener('submit', function (e) {
+      root.addEventListener('submit', async function (e) {
         var form = e.target.closest('[data-review-form]');
         if (!form) return;
         e.preventDefault();
         var user = BS.auth.user();
         if (!user) return;
         var data = new FormData(form);
-        var result = db.addReview({
+        var result = await db.addReview({
           productId: product.id,
           userId: user.id,
           author: user.name,

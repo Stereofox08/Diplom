@@ -11,6 +11,11 @@
       console.error('ByteStore: не загружено ядро приложения');
       return;
     }
+    if (!BS.cloud) {
+      var unavailable = document.getElementById('pageContent') || document.getElementById('adminRoot');
+      if (unavailable) unavailable.innerHTML = '<div class="container section"><div class="alert alert--danger">Не удалось загрузить подключение к магазину. Проверьте интернет и обновите страницу.</div></div>';
+      return;
+    }
     BS.db.init().then(function () {
       BS.db.visit();
       var page = document.body.getAttribute('data-page') || 'home';
@@ -35,11 +40,11 @@
       wireShortcuts();
     }).catch(function (error) {
       console.error('ByteStore: ошибка инициализации', error);
-      var root = document.getElementById('pageContent');
+      var root = document.getElementById('pageContent') || document.getElementById('adminRoot');
       if (root) {
         root.innerHTML = '<div class="container section"><div class="alert alert--danger">' +
           '<span class="alert__icon">⚠️</span><div class="alert__body"><strong>Не удалось загрузить магазин</strong>' +
-          '<p>Обновите страницу. Если ошибка повторяется — очистите данные сайта в настройках браузера.</p>' +
+          '<p>' + BS.util.esc(error.message || 'Проверьте подключение к интернету и повторите попытку.') + '</p><button class="btn btn--primary" onclick="location.reload()">Повторить</button>' +
           '</div></div></div>';
       }
     });

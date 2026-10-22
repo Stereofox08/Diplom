@@ -31,9 +31,9 @@
           action: '<div class="btn-group"><a class="btn btn--primary" href="account.html">Личный кабинет</a>' +
             '<button class="btn btn--outline" data-logout-now>Выйти</button></div>'
         }) + '</div>';
-        root.addEventListener('click', function (e) {
+        root.addEventListener('click', async function (e) {
           if (e.target.closest('[data-logout-now]')) {
-            BS.auth.logout();
+            await BS.auth.logout();
             window.location.href = 'index.html';
           }
         });
@@ -62,14 +62,14 @@
         '<div data-login-error></div>' +
         '<button class="btn btn--primary btn--lg btn--block" type="submit">' + BS.icon('logout', { size: 18 }) +
         'Войти</button></form>' +
-        '<div class="divider mt-5">или</div>' +
-        '<p class="muted small center mt-3">Демонстрационные аккаунты из базы данных:</p>' +
+        (BS.cloud ? '' : '<div class="divider mt-5">или</div>') +
+        (BS.cloud ? '' : '<p class="muted small center mt-3">Демонстрационные аккаунты из базы данных:</p>') +
         '<div class="promo-list" data-demo-accounts>' +
         BS.auth.demoAccounts().slice(0, 3).map(function (account, index) {
           return '<button class="chip" data-demo-login="' + index + '">' + U.esc(account.name) + '</button>';
         }).join('') + '</div>' +
         '<p class="small mt-5 center">Нет аккаунта? <a href="register.html">Зарегистрируйтесь</a> — это займёт минуту.</p>' +
-        '<p class="muted small center mt-2">Пароль демо-аккаунтов: <span class="mono">demo1234</span></p>' +
+        (BS.cloud ? '' : '<p class="muted small center mt-2">Пароль демо-аккаунтов: <span class="mono">demo1234</span></p>') +
         '</div></div></div>';
       this.wire(root, next);
     },
@@ -78,20 +78,20 @@
       var form = root.querySelector('[data-login-form]');
       var toggle = root.querySelector('[data-toggle-password]');
       if (toggle) {
-        toggle.addEventListener('click', function () {
+        toggle.addEventListener('click', async function () {
           var input = root.querySelector('#lnPass');
           var show = input.type === 'password';
           input.type = show ? 'text' : 'password';
           toggle.innerHTML = BS.icon(show ? 'eye-off' : 'eye', { size: 18 });
         });
       }
-      form.addEventListener('submit', function (e) {
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         var button = form.querySelector('button[type="submit"]');
         var errorBox = root.querySelector('[data-login-error]');
         var data = new FormData(form);
         button.classList.add('is-loading');
-        BS.auth.login(data.get('email'), data.get('password')).then(function (result) {
+        BS.auth.login(data.get('email'), data.get('password')).then(async function (result) {
           button.classList.remove('is-loading');
           if (!result.ok) {
             errorBox.innerHTML = '<div class="alert alert--danger"><span class="alert__icon">⚠️</span>' +
@@ -103,7 +103,7 @@
           setTimeout(function () { window.location.href = next; }, 700);
         });
       });
-      root.addEventListener('click', function (e) {
+      root.addEventListener('click', async function (e) {
         var demo = e.target.closest('[data-demo-login]');
         if (!demo) return;
         var account = BS.auth.demoAccounts()[Number(demo.getAttribute('data-demo-login'))];
@@ -166,14 +166,14 @@
         'Надёжный пароль 🔒',
         'Максимальная стойкость 🔐'
       ];
-      passwordInput.addEventListener('input', function () {
+      passwordInput.addEventListener('input', async function () {
         var score = U.passwordScore(passwordInput.value);
         Array.prototype.forEach.call(strength.children, function (bar, index) {
           bar.className = index < score ? 'on-' + score : '';
         });
         strengthText.textContent = labels[score] || labels[0];
       });
-      form.addEventListener('submit', function (e) {
+      form.addEventListener('submit', async function (e) {
         e.preventDefault();
         var button = form.querySelector('button[type="submit"]');
         var errorBox = root.querySelector('[data-register-error]');
@@ -187,7 +187,7 @@
           password2: data.get('password2'),
           newsletter: data.get('newsletter') === 'on',
           agree: data.get('agree') === 'on'
-        }).then(function (result) {
+        }).then(async function (result) {
           button.classList.remove('is-loading');
           if (!result.ok) {
             var errors = result.errors || {};
@@ -197,7 +197,11 @@
               '</p></div></div>';
             return;
           }
-          L.toastOk(result.message + ' Начислено 10 000 бонусов', 'Регистрация завершена');
+          if (result.pendingConfirmation) {
+            errorBox.innerHTML = '<div class="alert alert--info">' + U.esc(result.message) + '</div>';
+            return;
+          }
+          L.toastOk(result.message + (BS.cloud ? '' : ' Начислено 10 000 бонусов'), 'Регистрация завершена');
           setTimeout(function () { window.location.href = 'account.html'; }, 900);
         });
       });

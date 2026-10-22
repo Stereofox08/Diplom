@@ -133,7 +133,7 @@
       var user = BS.auth.user();
       var totals = db.cartTotals(null, state.promo);
       var cities = ['Алматы', 'Астана', 'Шымкент', 'Караганда', 'Актобе', 'Тараз', 'Павлодар'];
-      function makeOrder(form, payment) {
+      async function makeOrder(form, payment) {
         var data = new FormData(form);
         var customer = {
           name: String(data.get('name') || '').trim(),
@@ -142,7 +142,7 @@
         };
         if (!customer.name) { L.toast('Укажите имя и фамилию', 'warn'); return null; }
         if (BS.auth.validatePhone(customer.phone)) { L.toast('Укажите корректный телефон', 'warn'); return null; }
-        var result = db.createOrder({
+        var result = await db.createOrder({
           customer: customer,
           city: data.get('city'),
           address: data.get('address'),
@@ -212,39 +212,54 @@
       });
       var paymentSelect = instance.el.querySelector('#coPayment');
       var installmentChoice = instance.el.querySelector('[data-installment-choice]');
-      paymentSelect.addEventListener('change', function () {
+      if (BS.cloud) {
+        paymentSelect.innerHTML = '<option value="Оплата при получении">Оплата при получении</option>';
+        installmentChoice.classList.add('hide');
+      }
+      paymentSelect.addEventListener('change', async function () {
         installmentChoice.classList.toggle('hide', paymentSelect.value !== 'Рассрочка');
       });
-      instance.el.addEventListener('click', function (e) {
+      instance.el.addEventListener('click', async function (e) {
         if (!e.target.closest('[data-checkout-submit]')) return;
         var form = instance.el.querySelector('[data-checkout-form]');
         if (!form.reportValidity()) return;
+        if (BS.cloud && !BS.auth.isLoggedIn()) { BS.auth.requireLogin('cart.html'); return; }
         var checkoutPhone = String(new FormData(form).get('phone') || '').trim();
         if (BS.auth.validatePhone(checkoutPhone)) { L.toast('Укажите корректный телефон', 'warn'); return; }
         var method = paymentSelect.value;
+        if (BS.cloud) {
+          var submit = e.target.closest('[data-checkout-submit]');
+          if (submit.disabled) return;
+          submit.disabled = true;
+          try {
+            var cloudOrder = await makeOrder(form, 'Оплата при получении');
+            if (cloudOrder) { instance.close(); state.promo = null; self.showSuccess(cloudOrder); L.refreshCounters(); }
+          } finally { submit.disabled = false; }
+          return;
+        }
         var data = new FormData(form);
         if (method === 'Картой онлайн') {
-          self.openCardPayment(totals, function () {
-            var order = makeOrder(form, method);
+          self.openCardPayment(totals, async function () {
+            var order = await makeOrder(form, method);
             if (order) { instance.close(); state.promo = null; self.showSuccess(order); L.refreshCounters(); }
           });
           return;
         }
         if (method === 'Единый QR') {
-          self.openQrPayment(totals, function () {
-            var order = makeOrder(form, method);
+          self.openQrPayment(totals, async function () {
+            var order = await makeOrder(form, method);
             if (order) { instance.close(); state.promo = null; self.showSuccess(order); L.refreshCounters(); }
           });
           return;
         }
         if (method === 'Рассрочка') {
-          self.openBankChoice(data.get('installmentTerm'), function (bank, term) {
-            var order = makeOrder(form, 'Рассрочка ' + term + ' · ' + bank);
+          self.openBankChoice(data.get('installmentTerm'), async function (bank, term) {
+            var order = await makeOrder(form, 'Рассрочка ' + term + ' · ' + bank);
             if (order) { instance.close(); state.promo = null; self.showSuccess(order); L.refreshCounters(); }
           });
           return;
         }
-        var order = makeOrder(form, method);
+        var order = await makeOrder(form, method);
         if (order) { instance.close(); state.promo = null; self.showSuccess(order); L.refreshCounters(); }
       });
     },
@@ -270,19 +285,19 @@
       var holder = modal.el.querySelector('#cardHolder');
       var expiry = modal.el.querySelector('#cardExpiry');
       var cvc = modal.el.querySelector('#cardCvc');
-      number.addEventListener('input', function () {
+      number.addEventListener('input', async function () {
         var value = number.value.replace(/\D/g, '').slice(0, 19);
         number.value = value.replace(/(.{4})/g, '$1 ').trim();
         modal.el.querySelector('[data-card-preview]').textContent = (value + '••••••••••••••••').slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
       });
-      holder.addEventListener('input', function () { modal.el.querySelector('[data-name-preview]').textContent = (holder.value || 'ВАШЕ ИМЯ').toUpperCase(); });
-      expiry.addEventListener('input', function () {
+      holder.addEventListener('input', async function () { modal.el.querySelector('[data-name-preview]').textContent = (holder.value || 'ВАШЕ ИМЯ').toUpperCase(); });
+      expiry.addEventListener('input', async function () {
         var value = expiry.value.replace(/\D/g, '').slice(0, 4);
         expiry.value = value.length > 2 ? value.slice(0, 2) + '/' + value.slice(2) : value;
         modal.el.querySelector('[data-expiry-preview]').textContent = expiry.value || 'MM/YY';
       });
-      cvc.addEventListener('input', function () { cvc.value = cvc.value.replace(/\D/g, '').slice(0, 4); });
-      modal.el.addEventListener('click', function (e) {
+      cvc.addEventListener('input', async function () { cvc.value = cvc.value.replace(/\D/g, '').slice(0, 4); });
+      modal.el.addEventListener('click', async function (e) {
         if (!e.target.closest('[data-card-pay]')) return;
         var digits = number.value.replace(/\D/g, '');
         if (!number.value.trim() || digits.length < 12 || !holder.value.trim() || !/^\d{2}\/\d{2}$/.test(expiry.value) || cvc.value.length < 3) {
@@ -304,7 +319,7 @@
         footer: '<button class="btn" data-close>Назад</button><button class="btn btn--primary" data-qr-paid>' +
           BS.icon('check', { size: 16 }) + 'Я оплатил(а)</button>'
       });
-      modal.el.addEventListener('click', function (e) { if (e.target.closest('[data-qr-paid]')) { modal.close(); onPaid(); } });
+      modal.el.addEventListener('click', async function (e) { if (e.target.closest('[data-qr-paid]')) { modal.close(); onPaid(); } });
     },
     openBankChoice: function (term, onChoose) {
       var banks = [
@@ -322,7 +337,7 @@
         footer: '<button class="btn" data-close>Назад</button><button class="btn btn--primary" data-bank-continue>' +
           'Продолжить с банком</button>'
       });
-      modal.el.addEventListener('click', function (e) {
+      modal.el.addEventListener('click', async function (e) {
         if (!e.target.closest('[data-bank-continue]')) return;
         var selected = modal.el.querySelector('[name="installmentBank"]:checked');
         if (!selected) { L.toast('Выберите банк', 'warn'); return; }
@@ -354,7 +369,7 @@
     wire: function () {
       var self = this;
       var root = this.root;
-      root.addEventListener('click', function (e) {
+      root.addEventListener('click', async function (e) {
         var row = e.target.closest('[data-line]');
         if (row) {
           var id = row.getAttribute('data-line');
@@ -376,7 +391,7 @@
         }
         if (e.target.closest('[data-cart-clear]')) {
           L.confirm('Удалить все товары из корзины?', { danger: true, confirmText: 'Очистить' })
-            .then(function (yes) {
+            .then(async function (yes) {
               if (!yes) return;
               db.clearCart();
               state.promo = null;
