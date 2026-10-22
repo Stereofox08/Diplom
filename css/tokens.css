@@ -1,0 +1,109 @@
+/* ==========================================================================
+   ByteStore — Дизайн-система: токены (CSS Custom Properties)
+   Все визуальные константы проекта. Тема переключается атрибутом
+   data-theme на <html>: "dark" (по умолчанию) | "light".
+   ========================================================================== */
+
+:root {
+  /* --- Палитра интерфейса (тёмная тема) --- */
+  --bg:            #06080f;
+  --bg-soft:       #0a0e1a;
+  --surface:       #0f1626;
+  --surface-2:     #141d33;
+  --surface-3:     #1b2742;
+  --surface-hover: #1a2440;
+  --border:        rgba(255, 255, 255, .08);
+  --border-strong: rgba(255, 255, 255, .18);
+  --overlay:       rgba(3, 6, 12, .72);
+
+  /* --- Текст --- */
+  --text:    #e9eefb;
+  --text-2:  #a6b2cd;
+  --text-3:  #8491ad;
+  --text-inv:#0a0f1a;
+
+  /* --- Акценты --- */
+  --accent:   #22d3ee;
+  --accent-2: #8b5cf6;
+  --accent-3: #38bdf8;
+  --ok:       #22c55e;
+  --warn:     #f59e0b;
+  --danger:   #fb4d6d;
+  --info:     #60a5fa;
+
+  --grad-accent: linear-gradient(135deg, #22d3ee 0%, #6366f1 55%, #8b5cf6 100%);
+  --grad-mesh:   radial-gradient(900px 500px at 12% -8%, rgba(34, 211, 238, .20), transparent 60%),
+                 radial-gradient(760px 460px at 92% 4%, rgba(139, 92, 246, .22), transparent 62%),
+                 radial-gradient(700px 520px at 50% 108%, rgba(56, 189, 248, .12), transparent 60%);
+
+  /* --- Тени и свечения --- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow:    0 10px 30px -12px rgba(0, 0, 0, .7);
+  --shadow-lg: 0 28px 60px -22px rgba(0, 0, 0, .85);
+  --glow:      0 0 0 1px rgba(34, 211, 238, .35), 0 12px 40px -14px rgba(34, 211, 238, .45);
+
+  /* --- Радиусы --- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* --- Отступы (шаг 4px) --- */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-7: 32px; --s-8: 40px;
+  --s-9: 56px; --s-10: 72px; --s-11: 96px;
+
+  /* --- Типографика --- */
+  --font-sans: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  --fs-xs: 12px; --fs-sm: 13px; --fs-md: 15px; --fs-lg: 17px;
+  --fs-xl: 20px; --fs-2xl: 26px; --fs-3xl: 34px; --fs-4xl: 44px; --fs-5xl: 58px;
+
+  /* --- Сетка и слои --- */
+  --container: 1280px;
+  --header-h: 72px;
+  --z-header: 100;
+  --z-drawer: 200;
+  --z-modal: 300;
+  --z-chat: 400;
+  --z-toast: 500;
+
+  /* --- Прочее --- */
+  --t-fast: .16s ease;
+  --t: .26s cubic-bezier(.22, .61, .36, 1);
+  --blur: saturate(160%) blur(14px);
+}
+
+/* --- Светлая тема --- */
+[data-theme="light"] {
+  --bg:            #f4f6fc;
+  --bg-soft:       #eaeef8;
+  --surface:       #ffffff;
+  --surface-2:     #f5f7fd;
+  --surface-3:     #eaeeff;
+  --surface-hover: #eef2ff;
+  --border:        rgba(15, 23, 42, .10);
+  --border-strong: rgba(15, 23, 42, .22);
+  --overlay:       rgba(15, 23, 42, .45);
+
+  --text:    #101728;
+  --text-2:  #4a566e;
+  --text-3:  #68758b;
+  --text-inv:#ffffff;
+
+  --accent:   #0891b2;
+  --accent-2: #6d28d9;
+  --accent-3: #0284c7;
+
+  --grad-mesh: radial-gradient(900px 500px at 12% -8%, rgba(8, 145, 178, .14), transparent 60%),
+               radial-gradient(760px 460px at 92% 4%, rgba(109, 40, 217, .13), transparent 62%),
+               radial-gradient(700px 520px at 50% 108%, rgba(2, 132, 199, .10), transparent 60%);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, .08);
+  --shadow:    0 10px 26px -14px rgba(15, 23, 42, .30);
+  --shadow-lg: 0 28px 56px -26px rgba(15, 23, 42, .38);
+  --glow:      0 0 0 1px rgba(8, 145, 178, .35), 0 12px 34px -16px rgba(8, 145, 178, .45);
+}

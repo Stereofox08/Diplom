@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ByteStore Admin — панель администратора магазина</title>
+  <meta name="description" content="Панель администратора ByteStore: дашборд продаж, управление товарами и категориями, модерация отзывов, заказы, клиенты и настройки ИИ.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#06080f">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%238b5cf6'/%3E%3Cpath d='M8 8h8v8H8z' fill='%2306080f'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://openrouter.ai">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body data-page="admin">
+  <div id="adminRoot"></div>
+  <div id="toastStack" class="toast-stack"></div>
+  <div id="bs-overlays"></div>
+  <noscript>
+    <div class="gate">
+      <div class="card gate__card">
+        <h3>Нужен JavaScript</h3>
+        <p class="muted">Панель администратора ByteStore работает на JavaScript. Включите его в браузере, чтобы
+          получить доступ к дашборду, товарам, заказам и модерации отзывов.</p>
+      </div>
+    </div>
+  </noscript>
+
+  <!-- Ядро -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/icons.js"></script>
+  <script src="js/core/icons-extra.js"></script>
+  <script src="js/core/art.js"></script>
+  <script src="js/data/seed.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/core/auth.js"></script>
+  <!-- ИИ -->
+  <script src="js/ai/openrouter.js"></script>
+  <script src="js/ai/advisor.js"></script>
+  <!-- Интерфейс и графики -->
+  <script src="js/ui/cards.js"></script>
+  <script src="js/ui/layout.js"></script>
+  <script src="js/admin/charts.js"></script>
+  <script src="js/admin/admin.js"></script>
+  <!-- Запуск -->
+  <script src="js/app.js"></script>
+</body>
+</html>
