@@ -714,6 +714,57 @@
 
   }
 
+  function wireTooltips() {
+    var tooltip = document.createElement('div');
+    tooltip.id = 'storefront-tooltip';
+    tooltip.className = 'storefront-tooltip';
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.hidden = true;
+    document.body.appendChild(tooltip);
+    var active = null, describedBy = null;
+
+    function hide() {
+      if (active) {
+        if (describedBy === null) active.removeAttribute('aria-describedby');
+        else active.setAttribute('aria-describedby', describedBy);
+      }
+      active = null;
+      tooltip.hidden = true;
+    }
+    function show(target) {
+      hide();
+      if (!target || !target.getAttribute('data-tip')) return;
+      active = target;
+      describedBy = target.getAttribute('aria-describedby');
+      target.setAttribute('aria-describedby', (describedBy ? describedBy + ' ' : '') + tooltip.id);
+      tooltip.textContent = target.getAttribute('data-tip');
+      tooltip.hidden = false;
+      var rect = target.getBoundingClientRect(), box = tooltip.getBoundingClientRect();
+      var left = Math.max(8, Math.min(rect.left + (rect.width - box.width) / 2, window.innerWidth - box.width - 8));
+      var top = rect.top - box.height - 8;
+      if (top < 8) top = rect.bottom + 8;
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = Math.max(8, Math.min(top, window.innerHeight - box.height - 8)) + 'px';
+    }
+    document.addEventListener('pointerover', function (e) {
+      if (e.pointerType === 'touch') return;
+      var target = e.target.closest('.tip[data-tip]');
+      if (target && target !== active) show(target);
+    });
+    document.addEventListener('pointerout', function (e) {
+      if (active && active.contains(e.target) && !active.contains(e.relatedTarget)) hide();
+    });
+    document.addEventListener('focusin', function (e) {
+      var target = e.target.closest('.tip[data-tip]');
+      if (target && target.matches(':focus-visible')) show(target);
+    });
+    document.addEventListener('focusout', function (e) { if (active && active.contains(e.target)) hide(); });
+    document.addEventListener('pointerdown', hide, true);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
+    document.addEventListener('scroll', hide, true);
+    window.addEventListener('resize', hide);
+  }
+
   /* ------------------------------- Запуск --------------------------------- */
   L.init = function () {
     var topbar = U.$('#bs-topbar');
@@ -727,6 +778,7 @@
     wireDelegation();
     wireSearch();
     wireScrollAndMenu();
+    wireTooltips();
     L.renderCompare();
     L.refreshCounters();
     document.documentElement.setAttribute('data-theme', L.theme());

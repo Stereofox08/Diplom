@@ -278,10 +278,16 @@ h1,h2 { text-wrap: balance; }
 @media(prefers-reduced-motion:reduce) {
   *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
-/* An invisible tooltip must not widen the document. */
-.tip::after { display: none; left: auto; right: 0; transform: none; max-width: min(220px,calc(100vw - 40px)); white-space: normal; text-align: center; }
-@media(hover:hover) {
-  .tip:hover::after { display: block; transform: none; }
+/* A body-level tooltip escapes clipped cards and stays inside the viewport. */
+.tip::after { display: none !important; }
+.storefront-tooltip {
+  position: fixed; z-index: 1000; pointer-events: none;
+  width: max-content; max-width: min(240px,calc(100vw - 16px));
+  padding: 7px 11px; border-radius: 8px;
+  background: var(--surface-3); color: var(--text); border: 1px solid var(--border-strong);
+  box-shadow: 0 6px 22px #0003; font-size: 12px; line-height: 1.4;
+  white-space: normal; overflow-wrap: anywhere; text-align: center;
 }
+.storefront-tooltip[hidden] { display: none; }
 /* Product artwork sizing must not also resize the overlay action icons. */
 .pc__media .pc__actions svg { width: 16px; height: 16px; padding: 0; transform: none; }
