@@ -16,6 +16,17 @@
     if (value && value.user) U.storage.set(db.SESSION_KEY, {userId:value.user.id, name:value.user.user_metadata && value.user.user_metadata.name, ts:Date.now()});
     else U.storage.remove(db.SESSION_KEY);
   }
+  function authError(data, fallback) {
+    var messages = {
+      email_not_confirmed: 'Подтвердите e-mail по ссылке из письма. Проверьте «Входящие» и «Спам».',
+      email_address_invalid: 'Сервис регистрации отклонил запрос. Если вы уже отправляли форму, проверьте письмо подтверждения. Если письма нет, обратитесь в поддержку магазина.',
+      email_address_not_authorized: 'Отправка писем на этот адрес пока недоступна. Обратитесь в поддержку магазина.',
+      over_email_send_rate_limit: 'Слишком много запросов на отправку письма. Проверьте почту и повторите попытку позже.',
+      over_request_rate_limit: 'Слишком много запросов. Подождите и повторите попытку.',
+      invalid_credentials: 'Неверный e-mail или пароль.'
+    };
+    return data && messages[data.code || data.error_code] || fallback;
+  }
   async function request(path, options, retry) {
     options = options || {};
     if (session && session.expires_at * 1000 < Date.now() + 45000 && path.indexOf('/auth/v1/token') !== 0) await renew();
@@ -28,8 +39,10 @@
       try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
       if (response.status === 401 && session && !retry && path.indexOf('/auth/') !== 0) { await renew(); return request(path, options, true); }
       if (!response.ok) {
-        var failure = new Error(data && (data.message || data.msg || data.error_description || data.error) || 'Сервис недоступен (' + response.status + ')');
+        var fallback = data && (data.message || data.msg || data.error_description || data.error) || 'Сервис недоступен (' + response.status + ')';
+        var failure = new Error(path.indexOf('/auth/') === 0 ? authError(data, fallback) : fallback);
         failure.status=response.status;
+        failure.code=data && (data.code || data.error_code);
         throw failure;
       }
       return data;
@@ -147,6 +160,7 @@
 
   auth.login = async function(email,password){
     try {
+      email=String(email || '').trim().toLowerCase();
       var before = db.cartOwner();
       var value = await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:email,password:password},noAuth:true});
       saveSession(value); await cloud.refresh();
@@ -160,6 +174,7 @@
     return result;
   };
   auth.register = async function(data){
+    data=Object.assign({},data,{email:String(data.email || '').trim().toLowerCase()});
     var errors = {};
     if (!String(data.name || '').trim()) errors.name='Укажите имя';
     if (auth.validateEmail(data.email)) errors.email=auth.validateEmail(data.email);

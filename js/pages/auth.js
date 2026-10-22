@@ -137,7 +137,7 @@
         '<input class="input" id="rgPhone" name="phone" required placeholder="+7 999 123-45-67"></div></div>' +
         '<div class="field"><label for="rgPass">Пароль</label>' +
         '<input class="input" id="rgPass" name="password" type="password" required ' +
-        'placeholder="минимум 6 символов">' +
+        'placeholder="минимум 8 символов">' +
         '<div class="strength" data-strength><i></i><i></i><i></i><i></i></div>' +
         '<span class="hint" data-strength-text>Придумайте пароль длиннее 10 символов с цифрами</span></div>' +
         '<div class="field"><label for="rgPass2">Повторите пароль</label>' +
@@ -177,6 +177,8 @@
         e.preventDefault();
         var button = form.querySelector('button[type="submit"]');
         var errorBox = root.querySelector('[data-register-error]');
+        if (button.disabled) return;
+        button.disabled = true;
         var data = new FormData(form);
         button.classList.add('is-loading');
         BS.auth.register({
@@ -189,6 +191,7 @@
           agree: data.get('agree') === 'on'
         }).then(async function (result) {
           button.classList.remove('is-loading');
+          button.disabled = false;
           if (!result.ok) {
             var errors = result.errors || {};
             errorBox.innerHTML = '<div class="alert alert--danger"><span class="alert__icon">⚠️</span>' +
@@ -199,6 +202,9 @@
           }
           if (result.pendingConfirmation) {
             errorBox.innerHTML = '<div class="alert alert--info">' + U.esc(result.message) + '</div>';
+            button.disabled = true;
+            button.textContent = 'Проверьте почту для подтверждения';
+            root.querySelectorAll('[data-register-form] input').forEach(function(input){input.disabled=true;});
             return;
           }
           L.toastOk(result.message + (BS.cloud ? '' : ' Начислено 10 000 бонусов'), 'Регистрация завершена');
