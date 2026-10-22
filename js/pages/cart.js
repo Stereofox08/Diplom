@@ -134,7 +134,9 @@
       var user = BS.auth.user();
       var totals = db.cartTotals(null, state.promo);
       var cities = ['Алматы', 'Астана', 'Шымкент', 'Караганда', 'Актобе', 'Тараз', 'Павлодар'];
+      var submitting = false;
       async function makeOrder(form, payment) {
+        if (submitting) return null;
         var data = new FormData(form);
         var customer = {
           name: String(data.get('name') || '').trim(),
@@ -143,20 +145,27 @@
         };
         if (!customer.name) { L.toast('Укажите имя и фамилию', 'warn'); return null; }
         if (BS.auth.validatePhone(customer.phone)) { L.toast('Укажите корректный телефон', 'warn'); return null; }
-        var result = await db.createOrder({
-          customer: customer,
-          city: data.get('city'),
-          address: data.get('address'),
-          deliveryType: data.get('deliveryType'),
-          payment: payment || data.get('payment'),
-          comment: data.get('comment'),
-          promo: state.promo,
-          promoCode: state.promo ? state.promo.code : '',
-          userId: user ? user.id : null,
-          source: 'Корзина'
-        });
-        if (!result.ok) { L.toast(result.message, 'danger'); return null; }
-        return result.order;
+        submitting = true;
+        instance.el.querySelector('[data-checkout-submit]').disabled = true;
+        try {
+          var result = await db.createOrder({
+            customer: customer,
+            city: data.get('city'),
+            address: data.get('address'),
+            deliveryType: data.get('deliveryType'),
+            payment: payment || data.get('payment'),
+            comment: data.get('comment'),
+            promo: state.promo,
+            promoCode: state.promo ? state.promo.code : '',
+            userId: user ? user.id : null,
+            source: 'Корзина'
+          });
+          if (!result.ok) { L.toast(result.message, 'danger'); return null; }
+          return result.order;
+        } finally {
+          submitting = false;
+          instance.el.querySelector('[data-checkout-submit]').disabled = false;
+        }
       }
       var instance = L.modal({
         title: 'Оформление заказа',
@@ -213,10 +222,6 @@
       });
       var paymentSelect = instance.el.querySelector('#coPayment');
       var installmentChoice = instance.el.querySelector('[data-installment-choice]');
-      if (BS.cloud) {
-        paymentSelect.innerHTML = '<option value="Оплата при получении">Оплата при получении</option>';
-        installmentChoice.classList.add('hide');
-      }
       paymentSelect.addEventListener('change', async function () {
         installmentChoice.classList.toggle('hide', paymentSelect.value !== 'Рассрочка');
       });
@@ -228,16 +233,6 @@
         var checkoutPhone = String(new FormData(form).get('phone') || '').trim();
         if (BS.auth.validatePhone(checkoutPhone)) { L.toast('Укажите корректный телефон', 'warn'); return; }
         var method = paymentSelect.value;
-        if (BS.cloud) {
-          var submit = e.target.closest('[data-checkout-submit]');
-          if (submit.disabled) return;
-          submit.disabled = true;
-          try {
-            var cloudOrder = await makeOrder(form, 'Оплата при получении');
-            if (cloudOrder) { instance.close(); state.promo = null; self.showSuccess(cloudOrder); L.refreshCounters(); }
-          } finally { submit.disabled = false; }
-          return;
-        }
         var data = new FormData(form);
         if (method === 'Картой онлайн') {
           self.openCardPayment(totals, async function () {
@@ -277,8 +272,7 @@
           '<div class="admin-split"><div class="field"><label for="cardExpiry">Срок действия</label>' +
           '<input class="input" id="cardExpiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/YY" required></div>' +
           '<div class="field"><label for="cardCvc">CVC / CVV</label>' +
-          '<input class="input" id="cardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="•••" required></div></div>' +
-          '<p class="muted small">Данные карты используются только для демонстрации оформления и не сохраняются.</p>',
+          '<input class="input" id="cardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="•••" required></div></div>',
         footer: '<button class="btn" data-close>Отмена</button><button class="btn btn--primary" data-card-pay>' +
           BS.icon('lock', { size: 16 }) + 'Оплатить ' + U.money(totals.total) + '</button>'
       });

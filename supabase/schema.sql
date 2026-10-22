@@ -223,6 +223,8 @@ declare
  uid uuid:=auth.uid(); request uuid:=(payload->>'requestId')::uuid; oid uuid; existing public.orders;
  line record; p public.products; settings jsonb; promo public.promos;
  subtotal bigint:=0; discount bigint:=0; delivery bigint; total bigint; item_count integer;
+ payment text:=coalesce(nullif(payload->>'payment',''),'Оплата при получении');
+ payment_status text;
 begin
  if uid is null or not exists(select 1 from public.profiles where id=uid and status='active') then raise exception 'Войдите в аккаунт для оформления заказа' using errcode='42501'; end if;
  if request is null then raise exception 'Не указан идентификатор заказа'; end if;
@@ -240,6 +242,9 @@ begin
    if p.id is null or p.status<>'active' or line.qty>p.stock or line.qty>1000 then raise exception 'Товар отсутствует или недостаточно остатка: %',line.id; end if;
    subtotal:=subtotal+p.price*line.qty;
  end loop;
+ -- The diploma shop simulates payment; no card details enter the API.
+ if payment not in ('Картой онлайн','Единый QR','При получении','Оплата при получении') and payment !~ '^Рассрочка 0-0-(6|12|24) · (Halyk|Kaspi|BCC|Freedom)$' then raise exception 'Выберите доступный способ оплаты'; end if;
+ payment_status:=case when payment in ('При получении','Оплата при получении') then 'unpaid' else 'paid' end;
  if nullif(trim(payload->>'promoCode'),'') is not null then
    select * into promo from public.promos where code=upper(trim(payload->>'promoCode')) and active for update;
    if promo.code is null or subtotal<promo.min then raise exception 'Промокод недействителен или не достигнута минимальная сумма'; end if;
@@ -248,7 +253,7 @@ begin
  delivery:=case when subtotal-discount>=coalesce((settings->>'freeDeliveryFrom')::bigint,250000) then 0 else coalesce((settings->>'deliveryCost')::bigint,2990) end;
  total:=subtotal-discount+delivery;
  if (payload->>'expectedTotal')::bigint is distinct from total then raise exception 'Стоимость заказа изменилась. Обновите корзину.' using errcode='PT409'; end if;
- insert into public.orders(user_id,request_id,subtotal,discount,delivery_cost,total,data) values(uid,request,subtotal,discount,delivery,total,jsonb_build_object('customer',payload->'customer','city',coalesce(payload->>'city',''),'address',coalesce(payload->>'address',''),'deliveryType',coalesce(payload->>'deliveryType',''),'payment','Оплата при получении','paymentStatus','unpaid','comment',coalesce(payload->>'comment',''),'source','Каталог','promoCode',coalesce(promo.code,''),'history',jsonb_build_array(jsonb_build_object('status','new','ts',extract(epoch from now())*1000)))) returning id into oid;
+ insert into public.orders(user_id,request_id,subtotal,discount,delivery_cost,total,data) values(uid,request,subtotal,discount,delivery,total,jsonb_build_object('customer',payload->'customer','city',coalesce(payload->>'city',''),'address',coalesce(payload->>'address',''),'deliveryType',coalesce(payload->>'deliveryType',''),'payment',payment,'paymentStatus',payment_status,'paymentMode','demo','comment',coalesce(payload->>'comment',''),'source','Каталог','promoCode',coalesce(promo.code,''),'history',jsonb_build_array(jsonb_build_object('status','new','ts',extract(epoch from now())*1000)))) returning id into oid;
  for line in select x->>'productId' id,sum((x->>'qty')::integer)::integer qty from jsonb_array_elements(payload->'lines') x group by 1 order by 1 loop
    select * into p from public.products where id=line.id;
    insert into public.order_items(order_id,product_id,name,category_id,qty,price) values(oid,p.id,p.name,p.category_id,line.qty,p.price);
@@ -256,7 +261,7 @@ begin
  end loop;
  if promo.code is not null then update public.promos set used=used+1 where code=promo.code; end if;
  insert into public.audit_log(user_id,action) values(uid,'Создан заказ '||oid);
- return jsonb_build_object('ok',true,'orderId',oid,'message','Заказ оформлен. Оплата при получении.');
+ return jsonb_build_object('ok',true,'orderId',oid,'message','Заказ оформлен.');
 end; $$;
 revoke all on function private.checkout(jsonb) from public;
 grant execute on function private.checkout(jsonb) to authenticated;
