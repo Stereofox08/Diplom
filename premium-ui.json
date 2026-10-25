@@ -25,7 +25,9 @@
     "auth",
     "payment",
     "tooltips",
-    "brand"
+    "brand",
+    "account-layout",
+    "page-states"
   ],
   "commands": {
     "tokens": "python3 design/generate.py --check",
@@ -33,7 +35,9 @@
     "auth": "node tests/auth-errors.cjs",
     "payment": "node tests/demo-payment.cjs",
     "tooltips": "node tests/tooltips.cjs",
-    "brand": "node tests/brand-visual.cjs"
+    "brand": "node tests/brand-visual.cjs",
+    "account-layout": "node tests/account-layout.cjs",
+    "page-states": "node tests/page-states.cjs"
   },
   "evidence": {
     "crudFullFlow": "tests/shared-database.cjs",

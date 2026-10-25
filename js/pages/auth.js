@@ -135,7 +135,7 @@
         '<form data-register-form>' +
         '<div class="field"><label for="rgName">Имя и фамилия</label>' +
         '<input class="input" id="rgName" name="name" required placeholder="Аскар Нурланов"></div>' +
-        '<div class="admin-split">' +
+        '<div class="form-grid">' +
         '<div class="field"><label for="rgEmail">E-mail</label>' +
         '<input class="input" id="rgEmail" name="email" type="email" required placeholder="client@mail.kz"></div>' +
         '<div class="field"><label for="rgPhone">Телефон</label>' +

@@ -79,3 +79,7 @@ Product photos use Android's document picker; decoded images are downsampled and
 ## Desktop theme control repair
 
 Both desktop admin shells expose the shared `BS.layout` theme owner on login and in the header. Admin initialization binds one delegated handler on its stable root and reapplies the saved preference; it does not mount the storefront navigation. `data-admin-theme` reports its current state through `aria-pressed`. macOS also exposes View → Switch theme, and a file-origin-only WKWebView bridge synchronizes native window appearance to the same palette. `admin-theme.cjs` tests clicks, keyboard use and reload persistence; the native macOS smoke checks both web controls and native window appearance. No authentication or database operations change.
+
+## Full-page layout verification
+
+Shared KPI geometry lives in `css/components.css`; private admin CSS contains only dashboard-specific decoration. Public registration/checkout use the shared `.form-grid` instead of depending on `.admin-split`. Account-specific responsive composition lives in `css/account.css`, loaded after the common brand layer. All five authenticated account tabs are verified with local empty/populated fixtures, long names/email/order/review content, both themes and 320–1920px widths; write endpoints are blocked. Layout checks assert inner card padding and icon containment as well as page overflow, because an unpadded card can still fit the viewport. Core storefront pages are checked in both themes across eight widths, including checkout/payment overlays and mobile navigation.

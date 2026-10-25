@@ -14,7 +14,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   await page.route('**/rest/v1/store_revision*',async route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify([{version:JSON.parse(snapshot||'{}').cloudRevision||0}])}));
   const files=['index.html','catalog.html','product.html?id=gpu-rtx4060','cart.html','configurator.html','register.html','login.html','favorites.html'];
   async function contained(label){const metrics=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(metrics.scroll<=metrics.width+1,label+' overflows: '+JSON.stringify(metrics));results.push(label);}
-  for(const [theme,widths] of [['dark',[320,360,390,768,1024,1280,1440]],['light',[390,1440]]]){
+  for(const [theme,widths] of [['dark',[320,360,390,768,1024,1280,1440,1920]],['light',[320,360,390,768,1024,1280,1440,1920]]]){
    for(const width of widths){await page.setViewportSize({width,height:900});for(const file of files){
     await page.goto(base+file,{waitUntil:'networkidle'});await page.waitForSelector('.header__in');await page.evaluate(t=>BS.layout.setTheme(t),theme);
     if(file==='cart.html'){await page.evaluate(()=>{BS.db.addToCart('gpu-rtx4060',1);BS.db.addToCart('cpu-i7-14700kf',1);BS.pages.cart.render();});}
@@ -27,7 +27,7 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   const query=page.locator('[data-filter-q]');await query.fill('Ryzen');await page.waitForFunction(()=>document.querySelectorAll('#catalogGrid .pc').length===3);await contained('filtered mobile catalog');
   await page.locator('[data-burger]').click();assert.equal(await page.locator('.drawer').isVisible(),true);await page.keyboard.press('Escape');assert.equal(await page.locator('.drawer').count(),0);
   await page.goto(base+'cart.html',{waitUntil:'networkidle'});await page.waitForSelector('.header__in');await page.evaluate(()=>{BS.db.addToCart('gpu-rtx4060',1);BS.auth.isLoggedIn=()=>true;BS.auth.user=()=>({id:'layout-only',name:'Проверка интерфейса',email:'example@example.com',phone:'+77000000000'});BS.pages.cart.openCheckout();});
-  assert.equal(await page.locator('#coPayment option').count(),4);await contained('checkout modal mobile');const box=await page.locator('.modal').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=390);await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#coPayment option').count(),4);assert.equal(await page.locator('.modal .form-grid').first().evaluate(e=>getComputedStyle(e).display),'grid');await contained('checkout modal mobile');const box=await page.locator('.modal').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=390);await page.keyboard.press('Escape');
   await page.evaluate(()=>BS.pages.cart.openCardPayment({total:199990},()=>{}));await contained('card modal mobile');assert.equal(await page.locator('#cardNumber').isVisible(),true);await page.keyboard.press('Escape');
   await page.goto(base+'product.html?id=gpu-rtx4060',{waitUntil:'networkidle'});await page.waitForSelector('.product-info');await page.setViewportSize({width:768,height:900});await page.locator('.buy-row .tip').first().hover();await contained('product tooltip hover');
   assert.deepEqual(errors,[]);console.log('PASS: '+results.length+' layout checks, header containment, two themes, filters, mobile menu, checkout/card dialogs and tooltip. No database writes.');

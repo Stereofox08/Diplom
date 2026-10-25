@@ -35,7 +35,7 @@
 
       this.root.innerHTML = '<div class="container">' +
         C.breadcrumbs([{ label: 'Главная', href: 'index.html' }, { label: 'Личный кабинет' }]) +
-        '<div class="section-head mt-5"><div>' +
+        '<div class="section-head account-heading mt-5"><div>' +
         '<div class="kicker">' + BS.icon('user', { size: 14 }) + ' Личный кабинет</div>' +
         '<h1 style="font-size:var(--fs-2xl)">Здравствуйте, ' + U.esc(BS.auth.firstName()) + '!</h1>' +
         '<p>Здесь хранится история заказов, отзывы, избранные товары и настройки ИИ-конфигуратора.</p></div>' +
@@ -80,7 +80,7 @@
       var user = BS.auth.user();
       var stats = db.userStats(user.id);
       var orders = db.orders({ userId: user.id });
-      return '<div class="grid-4 mb-5">' +
+      return '<div class="grid-4 account-stats mb-5">' +
         this.kpi('Всего заказов', String(stats.orders), 'package') +
         this.kpi('Сумма покупок', U.kilo(stats.spent), 'wallet') +
         this.kpi('Отзывов оставлено', String(stats.reviews), 'thumbs-up') +
@@ -117,7 +117,7 @@
       return '<div class="card"><div class="panel-head"><h3>Профиль</h3>' +
         '<span class="muted small">В базе с ' + U.date(user.createdAt) + '</span></div>' +
         '<form data-profile-form>' +
-        '<div class="admin-split">' +
+        '<div class="account-form-grid">' +
         '<div class="field"><label for="pfName">Имя и фамилия</label>' +
         '<input class="input" id="pfName" name="name" value="' + U.attr(user.name) + '" required></div>' +
         '<div class="field"><label for="pfPhone">Телефон</label>' +
@@ -133,7 +133,7 @@
         '<form data-password-form>' +
         '<div class="field"><label for="pwCurrent">Текущий пароль</label>' +
         '<input class="input" id="pwCurrent" name="current" type="password" required></div>' +
-        '<div class="admin-split">' +
+        '<div class="account-form-grid">' +
         '<div class="field"><label for="pwNext">Новый пароль</label>' +
         '<input class="input" id="pwNext" name="next" type="password" required></div>' +
         '<div class="field"><label for="pwNext2">Повторите пароль</label>' +
@@ -182,8 +182,8 @@
     bonusesHtml: function () {
       var user = BS.auth.user();
       var promos = db.promos(true);
-      return '<div class="grid-2">' +
-        '<div class="card"><h3>' + BS.icon('gift', { size: 20 }) + ' Бонусный счёт</h3>' +
+      return '<div class="account-bonus-grid">' +
+        '<div class="card"><h3 class="account-card-title">' + BS.icon('gift', { size: 20 }) + ' Бонусный счёт</h3>' +
         '<div class="kpi__value">' + U.num(user.bonus || 0) + ' бонусов</div>' +
         '<p class="muted">1 бонус = 1 ₸. Бонусами можно оплатить до 30 % стоимости заказа, ' +
         'они начисляются за покупки (2 % от суммы) и за отзывы с фото (5 000 бонусов).</p>' +
@@ -191,10 +191,10 @@
         Math.min(100, Math.round((user.bonus || 0) / 15000 * 100)) + '%"></div></div>' +
         '<p class="muted small mt-2">До максимальной скидки 15 000 ₸ осталось ' +
         U.money(Math.max(15000 - (user.bonus || 0), 0)) + '</p></div>' +
-        '<div class="card"><h3>' + BS.icon('tag', { size: 20 }) + ' Ваши промокоды</h3>' +
+        '<div class="card"><h3 class="account-card-title">' + BS.icon('tag', { size: 20 }) + ' Ваши промокоды</h3>' +
         '<p class="muted small">Введите код в корзине при оформлении.</p>' +
         '<div class="col gap-3 mt-4">' + promos.map(function (promo) {
-          return '<div class="between"><span class="promo-tag">' + U.esc(promo.code) + '</span>' +
+          return '<div class="account-promo"><span class="promo-tag">' + U.esc(promo.code) + '</span>' +
             '<span class="grow small">' + U.esc(promo.description) + '</span>' +
             '<b>' + U.esc(db.promoLabel(promo)) + '</b></div>';
         }).join('') + '</div></div></div>';

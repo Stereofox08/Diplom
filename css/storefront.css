@@ -138,8 +138,8 @@ h1,h2 { text-wrap: balance; }
 .modal-backdrop { padding: 20px; }
 .modal { max-height: calc(100dvh - 40px); }
 .modal-foot > .btn { min-width: 0; white-space: normal; }
-.modal .admin-split { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
-.modal .admin-split > * { min-width: 0; }
+.modal .form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.modal .form-grid > * { min-width: 0; }
 .modal .steps { gap: 8px 16px; }
 .chat-fab { width: 52px; height: 52px; box-shadow: 0 8px 28px -14px #22d3ee80; }
 .chat-panel { max-height: calc(100dvh - 110px); min-height: 0; }
@@ -246,7 +246,7 @@ h1,h2 { text-wrap: balance; }
   .price-block { padding: 18px; gap: 10px; }
   .modal-backdrop { padding: 12px; }
   .modal { max-height: calc(100dvh - 24px); padding: 20px; border-radius: 18px; }
-  .modal .admin-split { grid-template-columns: minmax(0,1fr); gap: 0; }
+  .modal .form-grid { grid-template-columns: minmax(0,1fr); gap: 0; }
   .modal-foot { gap: 10px; }
   .modal-foot > .btn { flex: 1 1 120px; }
   .modal-head h3 { font-size: 19px; }

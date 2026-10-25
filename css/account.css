@@ -1,0 +1,40 @@
+/* Customer account: scoped layout, independent of staff-only stylesheet. */
+[data-page="account"] #pageContent { padding-block: 24px 64px; }
+.account-heading { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 24px; margin-bottom: 28px; }
+.account-heading h1 { overflow-wrap: anywhere; line-height: 1.2; }
+.account-heading p { max-width: 65ch; }
+.account-layout { grid-template-columns: 280px minmax(0,1fr); gap: 24px; }
+.account-layout > *, #accountBody { min-width: 0; }
+.account-side { position: static; padding: 20px; }
+.account-user { gap: 14px; align-items: flex-start; }
+.account-user .grow { min-width: 0; overflow-wrap: anywhere; }
+.account-user b { display: block; line-height: 1.5; }
+.account-user__ava { width: 48px; height: 48px; font-size: 18px; color: var(--text-inv); }
+.account-nav button { min-height: 46px; gap: 10px; padding: 12px; }
+.account-nav .count-pill { flex: none; }
+.account-stats { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 16px; }
+.account-stats .kpi { min-width: 0; min-height: 132px; padding: 20px; border: 1px solid var(--border); border-radius: var(--brand-card-radius); box-shadow: none; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+.account-stats .kpi__label { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.5; letter-spacing: 0; text-transform: none; }
+.account-stats .kpi__label svg { margin-top: 2px; color: var(--accent); }
+.account-stats .kpi__value { font-size: clamp(24px,2.2vw,32px); line-height: 1.2; margin: 0; overflow-wrap: anywhere; }
+#accountBody > .card { padding: 24px; }
+#accountBody .empty-state { padding: 48px 20px; }
+.account-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.account-form-grid .field { min-width: 0; }
+.account-bonus-grid { align-items: start; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.account-bonus-grid .card { padding: 24px; min-width: 0; }
+.account-card-title { display: flex; align-items: center; gap: 12px; margin: 0 0 20px; }
+.account-card-title svg { flex: none; color: var(--accent); }
+.account-bonus-grid .kpi__value { font-size: 28px; line-height: 1.25; margin: 0 0 12px; }
+.account-bonus-grid .progress { margin-top: 20px; }
+.account-promo { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px 12px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.account-promo:last-child { border-bottom: 0; padding-bottom: 0; }
+.account-promo .promo-tag { justify-self: start; margin: 0; grid-column: 1; border-color: var(--border-strong); background: var(--surface-2); color: var(--accent); }
+.account-promo .grow { grid-column: 1; min-width: 0; overflow-wrap: anywhere; color: var(--text-2); line-height: 1.6; }
+.account-promo b { grid-column: 2; grid-row: 1 / 3; align-self: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#accountBody .panel-head > * { min-width: 0; overflow-wrap: anywhere; }
+@media(max-width:1199px) { .account-stats { grid-template-columns: repeat(2,minmax(0,1fr)); } .account-bonus-grid { grid-template-columns: minmax(0,1fr); } }
+@media(max-width:900px) { .account-layout { grid-template-columns: minmax(0,1fr); } .account-heading { grid-template-columns: minmax(0,1fr); gap: 16px; } .account-heading > .btn { justify-self: start; } .account-nav { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; } .account-side hr { margin-block: 16px; } }
+@media(max-width:540px) { [data-page="account"] #pageContent { padding-block: 16px 40px; } .account-heading { margin-bottom: 20px; } .account-heading h1 { font-size: 30px !important; } .account-side, #accountBody > .card, .account-bonus-grid .card { padding: 18px; } .account-form-grid { grid-template-columns: minmax(0,1fr); gap: 0; } .account-stats { gap: 12px; } .account-stats .kpi { padding: 16px; min-height: 132px; } .account-card-title { font-size: 20px; } .account-promo b { font-size: 14px; } }
+
+@media(max-width:379px) { .account-nav { grid-template-columns: minmax(0,1fr); } }

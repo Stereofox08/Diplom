@@ -488,3 +488,18 @@ input[type="range"]::-webkit-slider-thumb { appearance: none; width: 20px; heigh
 }
 .chat-cards-actions .badge { margin-left: 6px; }
 .chat-cards-actions .btn { flex: none; }
+
+/* Shared statistics: used by customer account and staff dashboard. */
+.kpi {
+  position: relative; overflow: hidden; padding: var(--s-5);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+}
+.kpi__label { font-size: var(--fs-xs); color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: 6px; }
+.kpi__value { font-size: var(--fs-2xl); font-weight: 850; letter-spacing: -.03em; margin: var(--s-2) 0 2px; }
+
+.kpi__label svg { flex: none; }
+
+/* Public forms do not depend on the private admin stylesheet. */
+.form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--s-4); }
+.form-grid > * { min-width: 0; }
+@media(max-width:600px) { .form-grid { grid-template-columns: minmax(0,1fr); gap: 0; } }

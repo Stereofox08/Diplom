@@ -175,7 +175,7 @@
           '<span class="step is-done"><span class="step__num">2</span>Доставка</span>' +
           '<span class="step is-done"><span class="step__num">3</span>Оплата</span></div>' +
           '<form data-checkout-form>' +
-          '<div class="admin-split">' +
+          '<div class="form-grid">' +
           '<div class="field"><label for="coName">Имя и фамилия *</label>' +
           '<input class="input" id="coName" name="name" required value="' + U.attr(user ? user.name : '') + '"></div>' +
           '<div class="field"><label for="coPhone">Телефон *</label>' +
@@ -184,7 +184,7 @@
           '<div class="field"><label for="coEmail">E-mail для чека</label>' +
           '<input class="input" id="coEmail" type="email" name="email" placeholder="client@mail.kz" value="' +
           U.attr(user ? user.email : '') + '"></div>' +
-          '<div class="admin-split">' +
+          '<div class="form-grid">' +
           '<div class="field"><label for="coCity">Город</label><select class="select" id="coCity" name="city">' +
           cities.map(function (city) { return '<option>' + city + '</option>'; }).join('') + '</select></div>' +
           '<div class="field"><label for="coDelivery">Способ доставки</label>' +
@@ -269,7 +269,7 @@
           '<input class="input" id="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000" required></div>' +
           '<div class="field"><label for="cardHolder">Имя владельца</label>' +
           '<input class="input" id="cardHolder" autocomplete="cc-name" placeholder="Как на карте" required></div>' +
-          '<div class="admin-split"><div class="field"><label for="cardExpiry">Срок действия</label>' +
+          '<div class="form-grid"><div class="field"><label for="cardExpiry">Срок действия</label>' +
           '<input class="input" id="cardExpiry" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/YY" required></div>' +
           '<div class="field"><label for="cardCvc">CVC / CVV</label>' +
           '<input class="input" id="cardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="•••" required></div></div>',
