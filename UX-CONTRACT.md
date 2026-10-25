@@ -19,7 +19,7 @@ The original redesign scope is **visual-only**; the subsequent explicit request 
 
 ## Visual contract
 
-`DESIGN.md` describes the identity. `design/tokens.json` owns runtime values; `design/generate.py` emits platform adapters. Native OS chrome and popups are accepted platform variants. Web supports its existing dark/light themes; Android uses the shared light theme. Web theme switching remains available. Android uses light native system controls.
+`DESIGN.md` describes the identity. `design/tokens.json` owns runtime values; `design/generate.py` emits platform adapters. Native OS chrome and popups are accepted platform variants. Web supports its existing dark/light themes; Android defaults to the shared light theme and offers light/dark/system selection in Profile → Settings. The choice persists locally, recreation retains navigation and drafts; dialogs, system bars and all owned screens follow the selected palette. Web theme switching remains available.
 
 ## Canonical UI Map
 
@@ -56,3 +56,5 @@ Run token drift check, static premium audit over the visual migration sources, w
 Android defaults to manual assembly: eight core slots plus monitor, keyboard, mouse and headset. Product IDs persist locally; prices and stock are resolved from the current shared catalogue. Selection, replacement, removal, reset, compatibility, power estimate, price, FPS estimate, cart transfer and native specification sharing are available. Automatic selection remains a separate path with budget, five tasks, resolution, CPU brand, cooling and optional monitor/peripherals; results transfer back to manual editing. Partial builds follow the website rule: purchasable when selected components are compatible and available. Missing catalogue IDs block purchase until replaced/reset. Final checkout continues to validate live server stock atomically.
 
 The web expert engine generates 2,061 rule vectors consumed by Android instrumentation: sockets, memory, dimensions, cooling, power, warnings, notes, totals and performance estimates. This requested functional correction is the exception to the original visual-only scope.
+
+The user explicitly requested Android dark theme after review. This authorizes the local theme selector and persistence; no account/cart/server behavior changes.

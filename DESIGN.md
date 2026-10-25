@@ -70,7 +70,7 @@ Runtime values are owned by `design/tokens.json`; this file records the accepted
 
 ## Colors
 
-Warm white, graphite text and saturated violet actions are the default across platforms. Violet indicates primary actions, selection and focus; green, amber and red retain success/warning/danger meaning. Optional web dark theme uses plum graphite surfaces and lavender accents. Complete semantic palette values are in the runtime source. Category icons remain differentiated by shape and text, never by color alone.
+Warm white, graphite text and saturated violet actions are the default across platforms. Violet indicates primary actions, selection and focus; green, amber and red retain success/warning/danger meaning. Optional web/Android dark theme uses plum graphite surfaces and lavender accents. Complete semantic palette values are in the runtime source. Category icons remain differentiated by shape and text, never by color alone.
 
 ## Typography
 

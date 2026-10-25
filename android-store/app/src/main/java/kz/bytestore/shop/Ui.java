@@ -9,7 +9,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 final class Ui {
-  static final int BG = BrandTokens.BG,
+  static int BG = BrandTokens.BG,
       SURFACE = BrandTokens.SURFACE,
       PANEL = BrandTokens.PANEL,
       BORDER = BrandTokens.BORDER,
@@ -17,7 +17,35 @@ final class Ui {
       MUTED = BrandTokens.MUTED,
       ACCENT = BrandTokens.ACCENT,
       GREEN = BrandTokens.GREEN,
-      RED = BrandTokens.RED;
+      RED = BrandTokens.RED,
+      RAISED = BrandTokens.RAISED,
+      ON_PRIMARY = BrandTokens.ON_PRIMARY;
+
+  static boolean dark(Context c) {
+    String choice =
+        c.getSharedPreferences("appearance", Context.MODE_PRIVATE).getString("theme", "light");
+    return choice.equals("dark")
+        || choice.equals("system")
+            && (c.getResources().getConfiguration().uiMode
+                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+  }
+
+  static void applyTheme(Context c) {
+    boolean d = dark(c);
+    BG = d ? BrandTokens.DARK_BG : BrandTokens.BG;
+    SURFACE = d ? BrandTokens.DARK_SURFACE : BrandTokens.SURFACE;
+    PANEL = d ? BrandTokens.DARK_PANEL : BrandTokens.PANEL;
+    BORDER = d ? BrandTokens.DARK_BORDER : BrandTokens.BORDER;
+    TEXT = d ? BrandTokens.DARK_TEXT : BrandTokens.TEXT;
+    MUTED = d ? BrandTokens.DARK_MUTED : BrandTokens.MUTED;
+    ACCENT = d ? BrandTokens.DARK_ACCENT : BrandTokens.ACCENT;
+    GREEN = d ? BrandTokens.DARK_GREEN : BrandTokens.GREEN;
+    RED = d ? BrandTokens.DARK_RED : BrandTokens.RED;
+    RAISED = d ? BrandTokens.DARK_RAISED : BrandTokens.RAISED;
+    ON_PRIMARY = d ? BrandTokens.DARK_ON_PRIMARY : BrandTokens.ON_PRIMARY;
+  }
+
   private static Typeface regular, medium, bold, display;
 
   static Typeface font(Context c, int weight) {
@@ -116,7 +144,7 @@ final class Ui {
     b.setTextColor(
         new android.content.res.ColorStateList(
             new int[][] {new int[] {-android.R.attr.state_enabled}, new int[] {}},
-            new int[] {MUTED, primary ? 0xFFFFFFFF : TEXT}));
+            new int[] {MUTED, primary ? ON_PRIMARY : TEXT}));
     b.setMinHeight(dp(c, BrandTokens.CONTROL_HEIGHT));
     b.setMinimumHeight(dp(c, BrandTokens.CONTROL_HEIGHT));
     b.setPadding(dp(c, 12), dp(c, 4), dp(c, 12), dp(c, 4));

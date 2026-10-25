@@ -63,6 +63,8 @@ public final class MainActivity extends Activity {
 
   @Override
   public void onCreate(Bundle saved) {
+    Ui.applyTheme(this);
+    setTheme(Ui.dark(this) ? R.style.AppThemeDark : R.style.AppTheme);
     super.onCreate(saved);
     store = new Store(this);
     api = new Api(store);
@@ -71,7 +73,9 @@ public final class MainActivity extends Activity {
     getWindow()
         .getDecorView()
         .setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            Ui.dark(this)
+                ? 0
+                : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
     LinearLayout root = column(this);
     root.setBackgroundColor(BG);
     root.setOnApplyWindowInsetsListener(
@@ -1496,14 +1500,38 @@ public final class MainActivity extends Activity {
     row.setOnClickListener(v -> run.run());
   }
 
+  private void chooseTheme() {
+    String[] values = {"light", "dark", "system"};
+    String current = getSharedPreferences("appearance", MODE_PRIVATE).getString("theme", "light");
+    int selected = Arrays.asList(values).indexOf(current);
+    new AlertDialog.Builder(this)
+        .setTitle("Тема оформления")
+        .setSingleChoiceItems(
+            new String[] {"Светлая", "Тёмная", "Как на устройстве"},
+            selected,
+            (dialog, position) -> {
+              getSharedPreferences("appearance", MODE_PRIVATE)
+                  .edit()
+                  .putString("theme", values[position])
+                  .apply();
+              dialog.dismiss();
+              recreate();
+            })
+        .setNegativeButton("Отмена", null)
+        .show();
+  }
+
   private void settings() {
     new AlertDialog.Builder(this)
         .setTitle("Настройки")
         .setItems(
-            new String[] {"Город доставки", "Обновить цены и наличие", "Настройки Android"},
+            new String[] {
+              "Тема оформления", "Город доставки", "Обновить цены и наличие", "Настройки Android"
+            },
             (dialog, pos) -> {
-              if (pos == 0) chooseCity();
-              else if (pos == 1) {
+              if (pos == 0) chooseTheme();
+              else if (pos == 1) chooseCity();
+              else if (pos == 2) {
                 refresh();
                 toast("Обновляем каталог");
               } else

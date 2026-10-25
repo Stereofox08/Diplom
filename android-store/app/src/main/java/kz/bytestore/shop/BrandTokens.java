@@ -2,15 +2,26 @@
 package kz.bytestore.shop;
 final class BrandTokens {
   static final int BG = 0xFFF5F3FA;
+  static final int DARK_BG = 0xFF18141F;
   static final int SURFACE = 0xFFFFFFFF;
+  static final int DARK_SURFACE = 0xFF251F30;
   static final int PANEL = 0xFFF9F7FD;
+  static final int DARK_PANEL = 0xFF2D253B;
   static final int RAISED = 0xFFEAE4F5;
+  static final int DARK_RAISED = 0xFF392D4D;
   static final int BORDER = 0xFFDDD6EB;
+  static final int DARK_BORDER = 0xFF4A3E5C;
   static final int TEXT = 0xFF241D35;
+  static final int DARK_TEXT = 0xFFF5EFFD;
   static final int MUTED = 0xFF71647F;
+  static final int DARK_MUTED = 0xFFB6A7C8;
   static final int ACCENT = 0xFF6332CC;
+  static final int DARK_ACCENT = 0xFFBF9AFF;
   static final int GREEN = 0xFF18654F;
+  static final int DARK_GREEN = 0xFF70D7B1;
   static final int RED = 0xFFAB2C49;
+  static final int DARK_RED = 0xFFFF9AA9;
+  static final int ON_PRIMARY = 0xFFFFFFFF, DARK_ON_PRIMARY = 0xFF211333;
   static final String BODY_FONT = "fonts/Inter.ttf";
   static final String DISPLAY_FONT = "fonts/Manrope.ttf";
   static final int CONTROL_HEIGHT = 46;
