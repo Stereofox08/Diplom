@@ -75,3 +75,7 @@ The user explicitly requested Android dark theme after review. This authorizes t
 | Unsaved edits | `navigate` + memory-only retained state | In-app discard confirmation; rotation retains form values without writing secrets to Bundle/disk |
 
 Product photos use Android's document picker; decoded images are downsampled and encoded as JPEG before sending through the existing product image field. Native admin operations are tested with a fake transport; live checks are read-only apart from creating/revoking the test login session. Default deployment keeps `android-admin` out of GitHub Pages.
+
+## Desktop theme control repair
+
+Both desktop admin shells expose the shared `BS.layout` theme owner on login and in the header. Admin initialization binds one delegated handler on its stable root and reapplies the saved preference; it does not mount the storefront navigation. `data-admin-theme` reports its current state through `aria-pressed`. macOS also exposes View → Switch theme, and a file-origin-only WKWebView bridge synchronizes native window appearance to the same palette. `admin-theme.cjs` tests clicks, keyboard use and reload persistence; the native macOS smoke checks both web controls and native window appearance. No authentication or database operations change.

@@ -37,8 +37,8 @@ with (contents / 'Info.plist').open('wb') as file:
         'CFBundleDisplayName': 'ByteStore Admin',
         'CFBundlePackageType': 'APPL',
         'CFBundleIconFile': 'AppIcon',
-        'CFBundleShortVersionString': '0.2.0',
-        'CFBundleVersion': '2',
+        'CFBundleShortVersionString': '0.2.1',
+        'CFBundleVersion': '3',
         'LSMinimumSystemVersion': '13.0',
         'NSHighResolutionCapable': True,
     }, file)

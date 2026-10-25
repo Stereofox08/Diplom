@@ -2,4 +2,5 @@
 import AppKit
 enum BrandTheme {
     static let background = NSColor(srgbRed: 0.96078431, green: 0.95294118, blue: 0.98039216, alpha: 1)
+    static let darkBackground = NSColor(srgbRed: 0.09411765, green: 0.07843137, blue: 0.12156863, alpha: 1)
 }

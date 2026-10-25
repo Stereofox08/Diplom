@@ -31,6 +31,13 @@
     var root = U.$('#adminRoot');
     if (!root) return;
     admin.root = root;
+    L.setTheme(L.theme());
+    if (!root._adminThemeWired) {
+      root._adminThemeWired = true;
+      root.addEventListener('click', function (event) {
+        if (event.target.closest('[data-admin-theme]')) { event.preventDefault(); L.toggleTheme(); }
+      });
+    }
     if (!db.isAdmin()) {
       renderLogin();
       return;
@@ -39,6 +46,10 @@
   };
 
   /* ------------------------------- Вход ----------------------------------- */
+  function themeButton() {
+    return '<button type="button" class="btn btn--ghost btn--sm" data-theme-toggle data-admin-theme aria-label="Сменить тему" aria-pressed="' + (L.theme() === 'dark') + '">' +
+      '<span data-theme-icon>' + BS.icon(L.theme() === 'dark' ? 'sun' : 'moon', { size: 18 }) + '</span> Тема</button>';
+  }
   function renderLogin() {
     admin.root.innerHTML = '<div class="admin-login"><div class="glass admin-login__card">' +
       '<div class="center col gap-3" style="text-align:center">' +
@@ -46,6 +57,7 @@
       '<div class="logo__name" style="font-size:24px">Byte<span>Store</span> · Admin</div>' +
       '<p class="muted small">Панель администратора интернет-магазина компьютерных комплектующих. ' +
       'Доступ только для сотрудников: вход по логину и паролю.</p></div>' +
+      '<div class="row center mt-4">' + themeButton() + '</div>' +
       '<form class="mt-5" data-admin-login>' +
       '<div class="field"><label for="adLogin">Логин</label>' +
       '<div class="input-icon">' + BS.icon('user', { size: 17 }) +
@@ -121,7 +133,7 @@
       BS.icon('menu', { size: 22 }) + '</button>' +
       '<div class="admin-top__title"><h2 id="adminTitle">Дашборд</h2>' +
       '<span id="adminSubtitle">Сводка продаж и ключевые показатели магазина</span></div>' +
-      '<div class="admin-top__actions">' +
+      '<div class="admin-top__actions">' + themeButton() +
       '<select class="select input--sm" data-admin-days>' +
       [7, 30, 90].map(function (days) {
         return '<option value="' + days + '"' + (ui.days === days ? ' selected' : '') +

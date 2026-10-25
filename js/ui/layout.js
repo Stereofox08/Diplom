@@ -43,6 +43,7 @@
   L.setTheme = function (theme) {
     document.documentElement.setAttribute('data-theme', theme);
     U.storage.set('theme', theme);
+    U.$$('[data-admin-theme]').forEach(function (node) { node.setAttribute('aria-pressed', String(theme === 'dark')); });
     U.$$('[data-theme-icon]').forEach(function (node) {
       node.innerHTML = BS.icon(theme === 'dark' ? 'sun' : 'moon', { size: 20 });
     });

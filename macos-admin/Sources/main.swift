@@ -12,6 +12,7 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
         let configuration = WKWebViewConfiguration()
         if smoke { configuration.websiteDataStore = .nonPersistent() }
         configuration.userContentController.add(self, name: "saveFile")
+        configuration.userContentController.add(self, name: "themeChanged")
         web = WKWebView(frame: .zero, configuration: configuration)
         web.navigationDelegate = self
         web.uiDelegate = self
@@ -48,6 +49,13 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
         fileItem.submenu?.addItem(withTitle: "Обновить данные", action: #selector(refresh), keyEquivalent: "r")
         fileItem.submenu?.addItem(withTitle: "Выйти из учётной записи", action: #selector(logout), keyEquivalent: "l")
         menu.addItem(fileItem)
+        let viewItem = NSMenuItem()
+        let viewMenu = NSMenu(title: "Вид")
+        viewItem.submenu = viewMenu
+        let themeItem = NSMenuItem(title: "Сменить тему", action: #selector(toggleTheme), keyEquivalent: "t")
+        themeItem.target = self
+        viewMenu.addItem(themeItem)
+        menu.addItem(viewItem)
         let editItem = NSMenuItem()
         let edit = NSMenu(title: "Правка")
         editItem.submenu = edit
@@ -62,8 +70,9 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
     }
 
     @objc func about() {
-        alert("ByteStore Admin 0.2", "Приложение управления ByteStore. Товары, заказы и пользователи хранятся в общей базе PostgreSQL (Supabase). Для работы требуется интернет.")
+        alert("ByteStore Admin 0.2.1", "Приложение управления ByteStore. Товары, заказы и пользователи хранятся в общей базе PostgreSQL (Supabase). Для работы требуется интернет.")
     }
+    @objc func toggleTheme() { web.evaluateJavaScript("BS.layout.toggleTheme()") }
     @objc func backup() { web.evaluateJavaScript("window.desktopAdmin.backup()") }
     @objc func logout() { web.callAsyncJavaScript("if (BS.db.isAdmin()) { await BS.db.adminLogout(); BS.admin.init(); }", arguments: [:], in: nil, in: .page) { _ in } }
     @objc func openStore() { NSWorkspace.shared.open(URL(string: "https://stereofox08.github.io/Diplom/")!) }
@@ -76,8 +85,13 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.frameInfo.isMainFrame, message.frameInfo.request.url?.isFileURL == true,
-              let body = message.body as? [String: String], let content = body["content"], let name = body["name"] else { return }
+        guard message.frameInfo.isMainFrame, message.frameInfo.request.url?.isFileURL == true else { return }
+        if message.name == "themeChanged", let theme = message.body as? String, ["light", "dark"].contains(theme) {
+            window.appearance = NSAppearance(named: theme == "dark" ? .darkAqua : .aqua)
+            window.backgroundColor = theme == "dark" ? BrandTheme.darkBackground : BrandTheme.background
+            return
+        }
+        guard message.name == "saveFile", let body = message.body as? [String: String], let content = body["content"], let name = body["name"] else { return }
         let panel = NSSavePanel()
         panel.nameFieldStringValue = (name as NSString).lastPathComponent
         panel.beginSheetModal(for: window) { result in
@@ -132,9 +146,14 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
             await BS.db.ready;
             if (!BS.util.storage.available) throw Error('Persistent storage unavailable');
             if (!document.querySelector('[data-admin-login]')) throw Error('Login missing');
+            const themeButton = document.querySelector('[data-admin-theme]');
+            if (!themeButton) throw Error('Login theme control missing');
+            BS.layout.setTheme('light'); themeButton.click();
+            if (BS.layout.theme() !== 'dark') throw Error('Login dark toggle failed');
             const result = await BS.db.adminLogin(email, password);
             if (!result.ok) throw Error('Login failed');
             BS.admin.init();
+            if (!document.querySelector('[data-admin-theme]')) throw Error('Admin theme control missing');
             for (const panel of ['dashboard','products','images','categories','orders','reviews','users','promos','ai','log']) BS.admin.show(panel);
             if (!BS.cloud || BS.db.productsAll().length !== 60) throw Error('Shared catalogue missing');
             return 'saved';
@@ -143,15 +162,20 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
             script = """
             await BS.db.ready;
             if (!BS.db.isAdmin()) throw Error('Session lost');
+            if (BS.layout.theme() !== 'dark' || document.documentElement.dataset.theme !== 'dark') throw Error('Theme lost after reload');
+            document.querySelector('[data-admin-theme]').click();
+            if (BS.layout.theme() !== 'light') throw Error('Light toggle failed');
             await BS.cloud.refresh();
             await BS.db.adminLogout(); BS.admin.init();
             if (!document.querySelector('[data-admin-login]')) throw Error('Logout failed');
-            return 'PASS: cloud login, shared catalogue, 10 panels, session after reload, logout';
+            return 'PASS: cloud login, shared catalogue, 10 panels, dark/light controls, theme and session after reload, logout';
             """
         }
         web.callAsyncJavaScript(script, arguments: ["email": email, "password": password], in: nil, in: .page) { result in
             switch result {
             case .success(let value):
+                let expected: NSAppearance.Name = self.smokeStage == 0 ? .darkAqua : .aqua
+                if self.window.appearance?.name != expected { self.finishTest("FAIL: native window theme not synchronized", code: 1); return }
                 if self.smokeStage == 0 { self.smokeStage = 1; self.web.reload() }
                 else { self.finishTest(String(describing: value), code: 0) }
             case .failure(let error): self.finishTest("FAIL: \(error)", code: 1)

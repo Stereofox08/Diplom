@@ -1,5 +1,11 @@
 (function () {
   'use strict';
+  function syncTheme() {
+    if (!window.webkit.messageHandlers.themeChanged) return;
+    window.webkit.messageHandlers.themeChanged.postMessage(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+  }
+  new MutationObserver(syncTheme).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+  syncTheme();
   BS.util.download = function (name, content) {
     window.webkit.messageHandlers.saveFile.postMessage({name: name, content: String(content)});
   };
