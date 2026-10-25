@@ -1,5 +1,6 @@
 const {app,BrowserWindow,Menu,dialog,ipcMain,shell,session}=require('electron');
 const path=require('node:path'),fs=require('node:fs/promises'),{pathToFileURL}=require('node:url');
+const theme=require('./theme.json');
 const store='https://stereofox08.github.io/Diplom/';
 const entry=pathToFileURL(path.join(__dirname,'web','admin.html')).href;
 const smoke=process.argv.includes('--smoke-test');
@@ -12,7 +13,7 @@ function command(name){window.webContents.send('admin-command',name);}
 app.whenReady().then(async()=>{
  session.defaultSession.setPermissionRequestHandler((_wc,_permission,done)=>done(false));
  session.defaultSession.setPermissionCheckHandler(()=>false);
- window=new BrowserWindow({title:'ByteStore Admin',width:1320,height:860,minWidth:900,minHeight:640,backgroundColor:'#0b1020',icon:path.join(__dirname,'icon.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,devTools:!app.isPackaged}});
+ window=new BrowserWindow({title:'ByteStore Admin',width:1320,height:860,minWidth:900,minHeight:640,backgroundColor:theme.background,icon:path.join(__dirname,'icon.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,devTools:!app.isPackaged}});
  window.webContents.setWindowOpenHandler(({url})=>{external(url);return {action:'deny'};});
  window.webContents.on('will-navigate',(event,url)=>{if(url!==entry){event.preventDefault();external(url);}});
  window.webContents.on('will-attach-webview',event=>event.preventDefault());

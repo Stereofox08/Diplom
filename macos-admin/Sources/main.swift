@@ -17,6 +17,7 @@ final class AdminApp: NSObject, NSApplicationDelegate, WKNavigationDelegate, WKU
         web.uiDelegate = self
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1320, height: 860), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
         window.title = "ByteStore Admin"
+        window.backgroundColor = BrandTheme.background
         window.minSize = NSSize(width: 900, height: 640)
         window.contentView = web
         window.center()

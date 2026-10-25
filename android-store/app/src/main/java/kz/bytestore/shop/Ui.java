@@ -9,36 +9,49 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 final class Ui {
-  static final int BG = Color.rgb(6, 8, 15),
-      SURFACE = Color.rgb(15, 22, 39),
-      PANEL = Color.rgb(21, 31, 51),
-      BORDER = Color.rgb(42, 54, 76),
-      TEXT = Color.rgb(235, 240, 252),
-      MUTED = Color.rgb(148, 163, 184),
-      ACCENT = Color.rgb(34, 211, 238),
-      GREEN = Color.rgb(74, 222, 128),
-      RED = Color.rgb(251, 113, 133);
-  private static Typeface regular, medium, bold;
+  static final int BG = BrandTokens.BG,
+      SURFACE = BrandTokens.SURFACE,
+      PANEL = BrandTokens.PANEL,
+      BORDER = BrandTokens.BORDER,
+      TEXT = BrandTokens.TEXT,
+      MUTED = BrandTokens.MUTED,
+      ACCENT = BrandTokens.ACCENT,
+      GREEN = BrandTokens.GREEN,
+      RED = BrandTokens.RED;
+  private static Typeface regular, medium, bold, display;
 
   static Typeface font(Context c, int weight) {
     try {
       if (regular == null) {
         regular =
-            new Typeface.Builder(c.getAssets(), "fonts/Inter.ttf")
+            new Typeface.Builder(c.getAssets(), BrandTokens.BODY_FONT)
                 .setFontVariationSettings("'wght' 400")
                 .build();
         medium =
-            new Typeface.Builder(c.getAssets(), "fonts/Inter.ttf")
+            new Typeface.Builder(c.getAssets(), BrandTokens.BODY_FONT)
                 .setFontVariationSettings("'wght' 600")
                 .build();
         bold =
-            new Typeface.Builder(c.getAssets(), "fonts/Inter.ttf")
+            new Typeface.Builder(c.getAssets(), BrandTokens.BODY_FONT)
                 .setFontVariationSettings("'wght' 700")
                 .build();
       }
       return weight >= 700 ? bold : weight >= 600 ? medium : regular;
     } catch (Exception e) {
       return Typeface.create("sans-serif", weight >= 600 ? Typeface.BOLD : Typeface.NORMAL);
+    }
+  }
+
+  static Typeface displayFont(Context c) {
+    try {
+      if (display == null)
+        display =
+            new Typeface.Builder(c.getAssets(), BrandTokens.DISPLAY_FONT)
+                .setFontVariationSettings("'wght' 700")
+                .build();
+      return display;
+    } catch (Exception e) {
+      return font(c, 700);
     }
   }
 
@@ -53,7 +66,12 @@ final class Ui {
   static GradientDrawable background(Context c, int color, int radius) {
     GradientDrawable d = new GradientDrawable();
     d.setColor(color);
-    d.setCornerRadius(dp(c, radius));
+    d.setCornerRadius(
+        dp(
+            c,
+            radius >= 14
+                ? BrandTokens.CARD_RADIUS
+                : radius >= 9 ? BrandTokens.CONTROL_RADIUS : radius));
     d.setStroke(dp(c, 1), BORDER);
     return d;
   }
@@ -64,7 +82,7 @@ final class Ui {
     t.setTextSize(size);
     t.setTextColor(color);
     t.setFontFeatureSettings("kern");
-    t.setTypeface(font(c, bold ? 700 : 400));
+    t.setTypeface(size >= 18 ? displayFont(c) : font(c, bold ? 700 : 400));
     t.setLineSpacing(dp(c, 2), 1);
     return t;
   }
@@ -96,16 +114,21 @@ final class Ui {
     b.setTextSize(14);
     b.setTypeface(font(c, 600));
     b.setTextColor(primary ? BG : TEXT);
-    b.setMinHeight(dp(c, 46));
-    b.setMinimumHeight(dp(c, 46));
+    b.setMinHeight(dp(c, BrandTokens.CONTROL_HEIGHT));
+    b.setMinimumHeight(dp(c, BrandTokens.CONTROL_HEIGHT));
     b.setPadding(dp(c, 12), dp(c, 4), dp(c, 12), dp(c, 4));
-    if (primary) {
-      GradientDrawable d =
-          new GradientDrawable(
-              GradientDrawable.Orientation.LEFT_RIGHT, new int[] {ACCENT, Color.rgb(96, 165, 250)});
-      d.setCornerRadius(dp(c, 12));
-      b.setBackground(d);
-    } else b.setBackground(background(c, PANEL, 12));
+    int base = primary ? ACCENT : PANEL;
+    android.graphics.drawable.StateListDrawable states =
+        new android.graphics.drawable.StateListDrawable();
+    GradientDrawable focused = background(c, base, BrandTokens.CONTROL_RADIUS);
+    focused.setStroke(dp(c, 2), primary ? TEXT : ACCENT);
+    states.addState(new int[] {android.R.attr.state_focused}, focused);
+    states.addState(new int[] {}, background(c, base, BrandTokens.CONTROL_RADIUS));
+    b.setBackground(
+        new android.graphics.drawable.RippleDrawable(
+            android.content.res.ColorStateList.valueOf((ACCENT & 0x00FFFFFF) | 0x33000000),
+            states,
+            null));
     b.setStateListAnimator(null);
     return b;
   }
@@ -120,7 +143,13 @@ final class Ui {
     e.setInputType(type);
     e.setTypeface(font(c, 400));
     e.setPadding(dp(c, 14), dp(c, 12), dp(c, 14), dp(c, 12));
-    e.setBackground(background(c, PANEL, 11));
+    android.graphics.drawable.StateListDrawable fieldStates =
+        new android.graphics.drawable.StateListDrawable();
+    GradientDrawable focusedField = background(c, PANEL, BrandTokens.CONTROL_RADIUS);
+    focusedField.setStroke(dp(c, 2), ACCENT);
+    fieldStates.addState(new int[] {android.R.attr.state_focused}, focusedField);
+    fieldStates.addState(new int[] {}, background(c, PANEL, BrandTokens.CONTROL_RADIUS));
+    e.setBackground(fieldStates);
     return e;
   }
 
@@ -157,7 +186,7 @@ final class Ui {
       paint.setColor(PANEL);
       canvas.drawRoundRect(
           0, 0, getWidth(), getHeight(), dp(getContext(), 12), dp(getContext(), 12), paint);
-      paint.setColor(Color.argb(18, 34, 211, 238));
+      paint.setColor((ACCENT & 0x00FFFFFF) | 0x12000000);
       canvas.drawCircle(getWidth() * .85f, getHeight() * .2f, getWidth() * .36f, paint);
       canvas.save();
       float scale = Math.min(getWidth() / 42f, getHeight() / 35f);
@@ -253,9 +282,9 @@ final class Ui {
       c.save();
       c.scale(getWidth() / 200f, getHeight() / 190f);
       paint.setStyle(Paint.Style.FILL);
-      paint.setColor(Color.argb(24, 34, 211, 238));
+      paint.setColor((ACCENT & 0x00FFFFFF) | 0x18000000);
       c.drawCircle(100, 88, 75, paint);
-      paint.setColor(Color.argb(50, 96, 165, 250));
+      paint.setColor((ACCENT & 0x00FFFFFF) | 0x32000000);
       c.drawOval(38, 169, 178, 183, paint);
       paint.setStyle(Paint.Style.STROKE);
       paint.setStrokeWidth(5);
@@ -286,7 +315,7 @@ final class Ui {
       c.drawRoundRect(68, 26, 140, 98, 14, 14, paint);
       paint.setStyle(Paint.Style.STROKE);
       paint.setStrokeWidth(3.5f);
-      paint.setColor(Color.rgb(96, 165, 250));
+      paint.setColor(ACCENT);
       c.drawRoundRect(79, 37, 129, 87, 7, 7, paint);
       c.drawRect(94, 52, 114, 72, paint);
       for (int n = 88; n < 126; n += 12) {

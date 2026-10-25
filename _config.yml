@@ -11,3 +11,8 @@ exclude:
   - docs
   - README.md
   - .vscode
+  - design
+  - DESIGN.md
+  - UX-CONTRACT.md
+  - premium-ui.json
+  - premium-audit.json

@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 
 root = Path(__file__).resolve().parent
 default_source = root.parent if (root.parent / 'index.html').exists() else root.parent / 'site'
@@ -41,13 +42,20 @@ with (contents / 'Info.plist').open('wb') as file:
         'NSHighResolutionCapable': True,
     }, file)
 env = dict(os.environ, CLANG_MODULE_CACHE_PATH='/tmp/bytestore-clang-cache')
-subprocess.run(['xcrun', 'swiftc', str(root / 'Sources' / 'main.swift'),
+subprocess.run(['xcrun', 'swiftc', str(root / 'Sources' / 'main.swift'), str(root / 'Sources' / 'BrandTheme.swift'),
                 '-module-cache-path', '/tmp/bytestore-swift-cache',
                 '-target', 'arm64-apple-macosx13.0', '-framework', 'AppKit', '-framework', 'WebKit',
                 '-o', str(contents / 'MacOS' / 'ByteStoreAdmin')], check=True, env=env)
 subprocess.run(['xattr', '-cr', str(app)], check=True)
 subprocess.run(['codesign', '--force', '--deep', '--sign', '-', str(app)], check=True)
 subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
+# Archive the signed staging bundle before cloud storage adds Finder metadata.
+archive = root / 'dist' / 'ByteStore-Admin-macOS.zip'
+archive.parent.mkdir(parents=True, exist_ok=True)
+with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as bundle:
+    for file in app.rglob('*'):
+        if file.is_file():
+            bundle.write(file, str(Path(app.name) / file.relative_to(app)))
 if destination.exists():
     shutil.rmtree(destination)
 shutil.copytree(app, destination, copy_function=shutil.copyfile)

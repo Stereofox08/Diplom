@@ -58,8 +58,8 @@
     if (product.image && /^(https?:|data:|\.|\/)/.test(product.image)) {
       return '<img src="' + BS.util.attr(product.image) + '" alt="' + alt + '" loading="lazy">';
     }
-    var color = cat.color || '#22d3ee';
-    var color2 = cat.color2 || '#8b5cf6';
+    var color = 'var(--accent)';
+    var color2 = 'var(--border-strong)';
     var gid = 'bg_' + String(product.id || Math.random()).replace(/[^a-z0-9]/gi, '');
     var labels = (product.key || []).slice(0, 2).join(' · ');
     if (labels.length > 33) labels = labels.slice(0, 30).trim() + '…';

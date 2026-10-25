@@ -1,0 +1,41 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": [
+    "css",
+    "android-store/app/src/main/java"
+  ],
+  "locale": "ru-KZ",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": [
+    "Select/Listbox",
+    "Date",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "ownership": {
+    "Select/Listbox": "native",
+    "Date": "native"
+  },
+  "requiredCommands": [
+    "tokens",
+    "web",
+    "auth",
+    "payment",
+    "tooltips",
+    "brand"
+  ],
+  "commands": {
+    "tokens": "python3 design/generate.py --check",
+    "web": "node tests/storefront-layout.cjs",
+    "auth": "node tests/auth-errors.cjs",
+    "payment": "node tests/demo-payment.cjs",
+    "tooltips": "node tests/tooltips.cjs",
+    "brand": "node tests/brand-visual.cjs"
+  },
+  "evidence": {
+    "crudFullFlow": "tests/shared-database.cjs",
+    "failurePaths": "tests/auth-errors.cjs"
+  }
+}
