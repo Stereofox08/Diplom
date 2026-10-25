@@ -68,6 +68,10 @@ public final class MainActivity extends Activity {
     api = new Api(store);
     getWindow().setStatusBarColor(BG);
     getWindow().setNavigationBarColor(SURFACE);
+    getWindow()
+        .getDecorView()
+        .setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
     LinearLayout root = column(this);
     root.setBackgroundColor(BG);
     root.setOnApplyWindowInsetsListener(
@@ -2239,7 +2243,354 @@ public final class MainActivity extends Activity {
         });
   }
 
+  private Map<String, JSONObject> manualBuild() {
+    Map<String, JSONObject> build = new LinkedHashMap<>();
+    try {
+      JSONObject ids =
+          new JSONObject(getSharedPreferences("builder", MODE_PRIVATE).getString("draft", "{}"));
+      for (String slot : BuildRules.SLOTS) {
+        JSONObject p = store.product(ids.optString(slot));
+        if (p != null) build.put(slot, p);
+      }
+    } catch (Exception ignored) {
+    }
+    return build;
+  }
+
+  private void saveBuild(Map<String, JSONObject> build) {
+    JSONObject ids = new JSONObject();
+    try {
+      for (String slot : build.keySet()) ids.put(slot, build.get(slot).optString("id"));
+    } catch (Exception ignored) {
+    }
+    getSharedPreferences("builder", MODE_PRIVATE).edit().putString("draft", ids.toString()).apply();
+  }
+
   private void builder() {
+    LinearLayout body = page();
+    heading(
+        body,
+        "Конфигуратор",
+        "Соберите свой ПК",
+        "Выберите детали. Совместимость и стоимость пересчитываются автоматически.");
+    action(body, "Автоматический подбор по бюджету", false, this::autoBuilder);
+    Map<String, JSONObject> build = manualBuild();
+    for (int i = 0; i < BuildRules.SLOTS.length; i++) {
+      final String slot = BuildRules.SLOTS[i], label = BuildRules.LABELS[i];
+      if (i == 8) section(body, text(this, "Дополнительные устройства", 21, TEXT, true));
+      JSONObject p = build.get(slot);
+      LinearLayout item = card(this);
+      add(
+          item,
+          text(
+              this,
+              String.format(java.util.Locale.ROOT, "%02d  %s", i + 1, label),
+              13,
+              ACCENT,
+              true));
+      gap(item, 10);
+      add(
+          item,
+          text(
+              this,
+              p == null ? "Не выбрано" : p.optString("name"),
+              16,
+              p == null ? MUTED : TEXT,
+              true));
+      if (p != null) {
+        gap(item, 6);
+        add(item, text(this, money(p.optLong("price")), 18, TEXT, true));
+        if (!buyable(p))
+          add(item, text(this, "Наличие требует проверки или товар недоступен", 12, RED, false));
+      }
+      action(item, p == null ? "Выбрать" : "Заменить", false, () -> buildPicker(slot, label));
+      if (p != null)
+        action(
+            item,
+            "Убрать",
+            false,
+            () -> {
+              build.remove(slot);
+              saveBuild(build);
+              builder();
+            });
+      section(body, item);
+    }
+    BuildRules.Check check = BuildRules.check(build);
+    LinearLayout total = card(this);
+    add(total, text(this, "Ваша сборка", 22, TEXT, true));
+    gap(total, 12);
+    add(total, text(this, money(check.total), 28, ACCENT, true));
+    add(
+        total,
+        text(
+            this,
+            "Пиковое потребление: "
+                + check.peak
+                + " Вт\nРекомендуемый БП: от "
+                + check.recommended
+                + " Вт",
+            14,
+            MUTED,
+            false));
+    if (!build.isEmpty()) {
+      add(total, text(this, "Оценка: ≈ " + check.fps + " FPS в Full HD", 14, TEXT, true));
+      if (check.ok())
+        add(total, text(this, "Совместимость выбранных деталей подтверждена", 14, GREEN, true));
+      for (String msg : check.errors) add(total, text(this, "• " + msg, 14, RED, false));
+      for (String msg : check.warnings) add(total, text(this, "• " + msg, 14, MUTED, false));
+      for (String msg : check.notes) add(total, text(this, "• " + msg, 13, MUTED, false));
+      boolean complete = true;
+      for (String slot : new String[] {"cpu", "motherboard", "ram", "storage", "psu", "case"})
+        if (!build.containsKey(slot)) complete = false;
+      if (!complete)
+        add(
+            total,
+            text(
+                this,
+                "Сборка неполная. Можно добавить выбранные детали или заполнить оставшиеся слоты.",
+                13,
+                MUTED,
+                false));
+    }
+    Button buy =
+        action(
+            total,
+            "Добавить сборку в корзину",
+            true,
+            () -> {
+              Map<String, JSONObject> fresh = manualBuild();
+              if (!verified()) {
+                toast("Сначала проверим наличие деталей");
+                refresh();
+                return;
+              }
+              if (!BuildRules.check(fresh).ok()) {
+                toast("Исправьте несовместимость деталей");
+                builder();
+                return;
+              }
+              for (JSONObject p : fresh.values())
+                if (!buyable(p)
+                    || store.cart.getOrDefault(p.optString("id"), 0) >= p.optInt("stock")) {
+                  toast("Одна из деталей недоступна в нужном количестве");
+                  builder();
+                  return;
+                }
+              for (JSONObject p : fresh.values()) store.add(p.optString("id"));
+              badges();
+              toast("Сборка добавлена в корзину");
+            });
+    int savedCount = 0;
+    try {
+      savedCount =
+          new JSONObject(getSharedPreferences("builder", MODE_PRIVATE).getString("draft", "{}"))
+              .length();
+    } catch (Exception ignored) {
+    }
+    boolean missing = savedCount > build.size();
+    if (missing)
+      add(
+          total,
+          text(
+              this,
+              "Один из сохранённых товаров удалён из каталога. Выберите замену или очистите"
+                  + " сборку.",
+              14,
+              RED,
+              false));
+    buy.setEnabled(!build.isEmpty() && check.ok() && !missing);
+    action(
+            total,
+            "Поделиться спецификацией",
+            false,
+            () -> {
+              StringBuilder spec = new StringBuilder("Сборка ByteStore\n\n");
+              for (int i = 0; i < BuildRules.SLOTS.length; i++) {
+                JSONObject p = build.get(BuildRules.SLOTS[i]);
+                if (p != null)
+                  spec.append(BuildRules.LABELS[i])
+                      .append(": ")
+                      .append(p.optString("name"))
+                      .append(" — ")
+                      .append(money(p.optLong("price")))
+                      .append("\n");
+              }
+              spec.append("\nИтого: ").append(money(check.total));
+              Intent share =
+                  new Intent(Intent.ACTION_SEND)
+                      .setType("text/plain")
+                      .putExtra(Intent.EXTRA_TEXT, spec.toString());
+              startActivity(Intent.createChooser(share, "Спецификация сборки"));
+            })
+        .setEnabled(!build.isEmpty());
+    action(
+        total,
+        "Очистить сборку",
+        false,
+        () ->
+            new AlertDialog.Builder(this)
+                .setTitle("Очистить сборку?")
+                .setMessage("Все выбранные детали будут удалены из конфигуратора.")
+                .setNegativeButton("Отмена", null)
+                .setPositiveButton(
+                    "Очистить",
+                    (d, w) -> {
+                      saveBuild(new LinkedHashMap<>());
+                      builder();
+                    })
+                .show());
+    section(body, total);
+  }
+
+  private void buildPicker(String slot, String label) {
+    LinearLayout box = column(this);
+    box.setPadding(dp(this, 16), 0, dp(this, 16), 0);
+    EditText search = field(this, "Поиск по названию", android.text.InputType.TYPE_CLASS_TEXT);
+    add(box, search);
+    CheckBox compatible = new CheckBox(this);
+    compatible.setText("Только совместимые с выбранными");
+    compatible.setTextColor(TEXT);
+    compatible.setTypeface(font(this, 500));
+    compatible.setTextSize(13);
+    add(box, compatible);
+    Spinner order =
+        spinner(
+            box,
+            "Сортировка",
+            Arrays.asList("Сначала дешевле", "Сначала дороже", "По популярности"),
+            0);
+    ListView list = new ListView(this);
+    box.addView(
+        list,
+        new LinearLayout.LayoutParams(
+            -1,
+            dp(
+                this,
+                Math.max(
+                    180,
+                    Math.min(
+                        320,
+                        getResources().getDisplayMetrics().heightPixels
+                                / getResources().getDisplayMetrics().density
+                            - 340)))));
+    List<JSONObject> visible = new ArrayList<>();
+    ArrayAdapter<String> rows =
+        new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new ArrayList<>()) {
+          @Override
+          public View getView(int position, View reused, ViewGroup parent) {
+            TextView row = (TextView) super.getView(position, reused, parent);
+            row.setTypeface(font(MainActivity.this, 500));
+            row.setTextSize(14);
+            row.setTextColor(TEXT);
+            row.setPadding(
+                dp(MainActivity.this, 12),
+                dp(MainActivity.this, 12),
+                dp(MainActivity.this, 12),
+                dp(MainActivity.this, 12));
+            return row;
+          }
+        };
+    list.setAdapter(rows);
+    AlertDialog dialog =
+        new AlertDialog.Builder(this)
+            .setTitle(label)
+            .setView(box)
+            .setNegativeButton("Закрыть", null)
+            .create();
+    Runnable update =
+        () -> {
+          visible.clear();
+          rows.clear();
+          Map<String, JSONObject> current = manualBuild();
+          for (int i = 0; i < store.array("products").length(); i++) {
+            JSONObject p = store.array("products").optJSONObject(i);
+            if (p == null
+                || !p.optString("categoryId").equals(BuildRules.category(slot))
+                || p.optInt("stock") <= 0
+                || !p.optString("status", "active").equals("active")) continue;
+            if (BuildRules.category(slot).equals("peripherals")
+                && !BuildRules.specs(p).optString("kind").equals(slot)) continue;
+            if (!p.optString("name")
+                .toLowerCase(java.util.Locale.ROOT)
+                .contains(search.getText().toString().toLowerCase(java.util.Locale.ROOT))) continue;
+            Map<String, JSONObject> trial = new LinkedHashMap<>(current);
+            trial.put(slot, p);
+            // A CPU without a GPU is a valid intermediate choice. Other errors remain visible.
+            BuildRules.Check after = BuildRules.check(trial);
+            List<String> introduced = new ArrayList<>(after.errors);
+
+            introduced.remove("У процессора нет встроенной графики — нужна видеокарта");
+            if (compatible.isChecked() && !introduced.isEmpty()) continue;
+            visible.add(p);
+          }
+          visible.sort(
+              (a, b) ->
+                  order.getSelectedItemPosition() == 2
+                      ? Double.compare(b.optDouble("rating", 0), a.optDouble("rating", 0))
+                      : order.getSelectedItemPosition() == 1
+                          ? Long.compare(b.optLong("price"), a.optLong("price"))
+                          : Long.compare(a.optLong("price"), b.optLong("price")));
+          for (JSONObject p : visible) {
+            Map<String, JSONObject> trial = new LinkedHashMap<>(current);
+            trial.put(slot, p);
+            List<String> issues = new ArrayList<>(BuildRules.check(trial).errors);
+            issues.remove("У процессора нет встроенной графики — нужна видеокарта");
+            JSONArray keys = p.optJSONArray("key");
+            StringBuilder details = new StringBuilder();
+            if (keys != null)
+              for (int k = 0; k < keys.length(); k++) {
+                if (k > 0) details.append(" · ");
+                details.append(keys.optString(k));
+              }
+            rows.add(
+                p.optString("name")
+                    + "\n"
+                    + money(p.optLong("price"))
+                    + " · В наличии: "
+                    + p.optInt("stock")
+                    + (details.length() > 0 ? "\n" + details : "")
+                    + (!issues.isEmpty() ? "\nЕсть несовместимость" : ""));
+          }
+          rows.notifyDataSetChanged();
+          if (visible.isEmpty())
+            search.setError("Нет подходящих товаров. Измените поиск или фильтр.");
+          else search.setError(null);
+        };
+    search.addTextChangedListener(
+        new TextWatcher() {
+          public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+
+          public void onTextChanged(CharSequence s, int st, int before, int c) {
+            update.run();
+          }
+
+          public void afterTextChanged(Editable e) {}
+        });
+    compatible.setOnCheckedChangeListener((v, c) -> update.run());
+    order.setOnItemSelectedListener(
+        new android.widget.AdapterView.OnItemSelectedListener() {
+          public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
+            update.run();
+          }
+
+          public void onNothingSelected(android.widget.AdapterView<?> p) {}
+        });
+    list.setOnItemClickListener(
+        (parent, v, position, id) -> {
+          Map<String, JSONObject> current = manualBuild();
+          current.put(slot, visible.get(position));
+          saveBuild(current);
+          dialog.dismiss();
+          builder();
+        });
+    update.run();
+    dialog.show();
+    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setAllCaps(false);
+    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTypeface(font(this, 600));
+  }
+
+  private void autoBuilder() {
     LinearLayout body = page();
     heading(
         body,
@@ -2252,8 +2603,23 @@ public final class MainActivity extends Activity {
         spinner(
             body,
             "Основная задача",
-            Arrays.asList("Игры", "Работа и учёба", "Стриминг и творчество"),
+            Arrays.asList(
+                "Игры", "Универсальный ПК", "Стриминг и монтаж", "3D-рендер и ИИ", "Офис и учёба"),
             0);
+    Spinner resolution =
+        spinner(body, "Разрешение", Arrays.asList("Full HD 1080p", "2K 1440p", "4K 2160p"), 0);
+    Spinner brand = spinner(body, "Процессор", Arrays.asList("Любой бренд", "Intel", "AMD"), 0);
+    Spinner cooling =
+        spinner(body, "Охлаждение", Arrays.asList("Автоматически", "Воздушное", "Жидкостное"), 0);
+    CheckBox monitor = new CheckBox(this);
+    monitor.setText("Включить монитор в бюджет");
+    monitor.setTextColor(TEXT);
+    add(body, monitor);
+    CheckBox peripherals = new CheckBox(this);
+    peripherals.setText("Включить клавиатуру и мышь в бюджет");
+    peripherals.setTextColor(TEXT);
+    add(body, peripherals);
+    action(body, "К ручной сборке", false, this::builder);
     LinearLayout result = column(this);
     Button build = action(body, "Подобрать совместимую сборку", true, () -> {});
     build.setOnClickListener(
@@ -2268,10 +2634,23 @@ public final class MainActivity extends Activity {
           hideKeyboard();
           int goal = purpose.getSelectedItemPosition();
           JSONObject catalog = store.state;
+          int res = resolution.getSelectedItemPosition(),
+              cpuBrand = brand.getSelectedItemPosition(),
+              coolerType = cooling.getSelectedItemPosition();
+          boolean needMonitor = monitor.isChecked(), needPeripherals = peripherals.isChecked();
           build.setEnabled(false);
           build.setText("Подбираем комплектующие…");
           async(
-              () -> BuildPicker.pick(catalog, limit, goal),
+              () ->
+                  BuildPicker.pick(
+                      catalog,
+                      limit,
+                      goal,
+                      res,
+                      cpuBrand,
+                      coolerType,
+                      needMonitor,
+                      needPeripherals),
               parts -> {
                 build.setEnabled(true);
                 build.setText("Подобрать совместимую сборку");
@@ -2295,6 +2674,23 @@ public final class MainActivity extends Activity {
               false));
       return;
     }
+    action(
+        result,
+        "Продолжить в ручном конфигураторе",
+        false,
+        () -> {
+          Map<String, JSONObject> draft = manualBuild();
+          for (JSONObject p : parts) {
+            String cat = p.optString("categoryId");
+            draft.put(
+                cat.equals("cooling")
+                    ? "cooler"
+                    : cat.equals("peripherals") ? BuildRules.specs(p).optString("kind") : cat,
+                p);
+          }
+          saveBuild(draft);
+          builder();
+        });
     long sum = 0;
     for (JSONObject p : parts) {
       sum += p.optLong("price");

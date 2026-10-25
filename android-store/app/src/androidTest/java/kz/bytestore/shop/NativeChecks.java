@@ -49,6 +49,39 @@ public final class NativeChecks extends Instrumentation {
       s.favorites.clear();
       s.savePersonal();
       check(s.array("products").length() == 60, "Bundled catalog missing");
+      String vectorsText;
+      try (java.io.InputStream input = getContext().getAssets().open("configurator-parity.json")) {
+        java.io.ByteArrayOutputStream bytes = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int count;
+        while ((count = input.read(buffer)) != -1) bytes.write(buffer, 0, count);
+        vectorsText = bytes.toString("UTF-8");
+      }
+      org.json.JSONArray vectors = new org.json.JSONArray(vectorsText);
+      for (int i = 0; i < vectors.length(); i++) {
+        JSONObject vector = vectors.getJSONObject(i), ids = vector.getJSONObject("ids");
+        Map<String, JSONObject> draft = new LinkedHashMap<>();
+        for (String slot : BuildRules.SLOTS)
+          if (ids.has(slot)) draft.put(slot, s.product(ids.getString(slot)));
+        BuildRules.Check c = BuildRules.check(draft);
+        check(
+            c.errors.size() == vector.getInt("errors"),
+            "Web/native errors mismatch " + i + " " + ids);
+        check(
+            c.warnings.size() == vector.getInt("warnings"),
+            "Web/native warnings mismatch " + i + " " + ids);
+        check(
+            c.notes.size() == vector.getInt("notes"), "Web/native notes mismatch " + i + " " + ids);
+        check(
+            c.peak == vector.getInt("peak")
+                && c.minimum == vector.getInt("minimum")
+                && c.recommended == vector.getInt("recommended"),
+            "Web/native power mismatch " + i);
+        check(
+            c.total == vector.getLong("total") && c.fps == vector.getInt("fps"),
+            "Web/native totals/FPS mismatch " + i);
+      }
+      results.putInt("configuratorParityVectors", vectors.length());
       check(Payment.validCard("4111111111111111"), "Valid card rejected");
       check(!Payment.validCard("4111111111111112"), "Bad checksum accepted");
       check(!Payment.validCard("0000000000000000"), "Zero card accepted");
@@ -149,6 +182,44 @@ public final class NativeChecks extends Instrumentation {
               int[] after = buttons(activity.findViewById(android.R.id.content));
               gates[1] = after[1] > 0;
               gates[2] = after[2] == 0;
+              android.content.SharedPreferences draftPrefs =
+                  activity.getSharedPreferences("builder", 0);
+              String originalDraft = draftPrefs.getString("draft", null);
+              try {
+                java.lang.reflect.Method save =
+                    MainActivity.class.getDeclaredMethod("saveBuild", Map.class);
+                java.lang.reflect.Method load = MainActivity.class.getDeclaredMethod("manualBuild");
+                java.lang.reflect.Method renderBuild =
+                    MainActivity.class.getDeclaredMethod("builder");
+                save.setAccessible(true);
+                load.setAccessible(true);
+                renderBuild.setAccessible(true);
+                Map<String, JSONObject> manual = new LinkedHashMap<>();
+                for (JSONObject part : build) {
+                  String cat = part.optString("categoryId");
+                  manual.put(cat.equals("cooling") ? "cooler" : cat, part);
+                }
+                save.invoke(activity, manual);
+                Map<?, ?> restoredBuild = (Map<?, ?>) load.invoke(activity);
+                check(restoredBuild.size() == 8, "Manual draft lost selected components");
+                check(
+                    draftPrefs.getString("draft", "").contains(manual.get("cpu").optString("id")),
+                    "Manual draft not persisted by product ID");
+                renderBuild.invoke(activity);
+                android.view.ViewGroup nativeRoot =
+                    (android.view.ViewGroup) activity.findViewById(android.R.id.content);
+                check(buttons(nativeRoot)[2] == 0, "Manual configurator contains WebView");
+                manual.remove("gpu");
+                save.invoke(activity, manual);
+                check(
+                    ((Map<?, ?>) load.invoke(activity)).size() == 7,
+                    "Component removal not persisted");
+                save.invoke(activity, new LinkedHashMap<String, JSONObject>());
+                check(((Map<?, ?>) load.invoke(activity)).isEmpty(), "Manual reset failed");
+              } finally {
+                if (originalDraft == null) draftPrefs.edit().remove("draft").commit();
+                else draftPrefs.edit().putString("draft", originalDraft).commit();
+              }
               activity.finish();
             } catch (Throwable e) {
               uiError[0] = e.toString();
@@ -160,9 +231,10 @@ public final class NativeChecks extends Instrumentation {
       check(gates[2], "Unexpected WebView in native app");
       results.putString(
           "stream",
-          "PASS: native UI stock gating/no WebView, catalog/HTTPS, SQLite, encrypted session, local"
-              + " basket/favorites, promos, idempotency, card validation and compatible 8-part"
-              + " build. Build selection "
+          "PASS: 2061 web/native configurator rule vectors, manual draft persistence/removal/reset,"
+              + " native UI stock gating/no WebView, catalog/HTTPS, SQLite, encrypted session,"
+              + " local basket/favorites, promos, idempotency, card validation and compatible"
+              + " 8-part build. Build selection "
               + duration
               + "ms. No orders/accounts created.");
       finish(android.app.Activity.RESULT_OK, results);

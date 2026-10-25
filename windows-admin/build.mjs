@@ -11,6 +11,7 @@ for(const folder of ['css','js'])await fs.cp(path.join(source,folder),path.join(
 let html=await fs.readFile(path.join(source,'admin.html'),'utf8');
 html=html.replace('</head>','<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: https:; connect-src https://mxyifzuhdojdyesussxj.supabase.co; font-src \'self\'; object-src \'none\'; base-uri \'none\';"><style>a[href=\"index.html\"]{display:none!important}</style></head>');
 html=html.replace('  <script src="js/app.js"></script>','  <script src="desktop.js"></script>\n  <script src="js/app.js"></script>');
+await fs.copyFile(path.join(source,'brand-icon.svg'),path.join(web,'brand-icon.svg'));
 await fs.writeFile(path.join(web,'admin.html'),html);await fs.copyFile(path.join(root,'app','desktop.js'),path.join(web,'desktop.js'));
 await fs.copyFile(path.join(root,'assets','icon.ico'),path.join(root,'app','icon.ico'));
 const platform=process.env.TARGET_PLATFORM||'win32',arch=platform==='darwin'?'arm64':'x64';

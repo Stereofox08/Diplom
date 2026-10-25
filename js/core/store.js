@@ -55,7 +55,7 @@
         lastSync: null,
         freeModels: []
       },
-      theme: 'dark',
+      theme: 'light',
       recommendations: true,
       maintenance: false
     };

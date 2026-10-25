@@ -4,7 +4,7 @@
 
 Russian-language computer store in Kazakhstan; KZT; Asia/Almaty. Customer web/Android and staff-only macOS/Windows administration share existing APIs. Accessibility target is WCAG 2.2 AA for owned web surfaces; native platform conventions apply on Android/macOS/Windows.
 
-Current request is **visual-only**. Preserve functionality, content, routing, confirmation/validation ownership, state persistence and server invariants. This document records existing owners rather than authorizing a behavioral migration. No new locale, permission, payment, privacy or deletion rules are introduced.
+The original redesign scope is **visual-only**; the subsequent explicit request also repairs Android configurator parity (see below). Preserve functionality, content, routing, confirmation/validation ownership, state persistence and server invariants. This document records existing owners rather than authorizing a behavioral migration. No new locale, permission, payment, privacy or deletion rules are introduced.
 
 ## Business-context sources
 
@@ -19,7 +19,7 @@ Current request is **visual-only**. Preserve functionality, content, routing, co
 
 ## Visual contract
 
-`DESIGN.md` describes the identity. `design/tokens.json` owns runtime values; `design/generate.py` emits platform adapters. Native OS chrome and popups are accepted platform variants. Web supports its existing dark/light themes; Android keeps its current dark theme. No theme-switching functionality is added or removed.
+`DESIGN.md` describes the identity. `design/tokens.json` owns runtime values; `design/generate.py` emits platform adapters. Native OS chrome and popups are accepted platform variants. Web supports its existing dark/light themes; Android uses the shared light theme. Web theme switching remains available. Android uses light native system controls.
 
 ## Canonical UI Map
 
@@ -50,3 +50,9 @@ No operation label, API payload, business handler, search algorithm, token persi
 ## Verification
 
 Run token drift check, static premium audit over the visual migration sources, web responsive/auth/payment/tooltip tests, admin visual-state checks, Android build/lint/native instrumentation and read-only screen checks, macOS app build/signature and Windows package/smoke checks where available. Never create real orders, send email or edit inventory to verify styling. Check at least one narrow viewport and both web themes, open popup/overlay, long labels, focus, loading and failure states. Record platform limitations honestly in `docs/verification.md`.
+
+## Configurator parity repair — explicitly requested 2026-10-25
+
+Android defaults to manual assembly: eight core slots plus monitor, keyboard, mouse and headset. Product IDs persist locally; prices and stock are resolved from the current shared catalogue. Selection, replacement, removal, reset, compatibility, power estimate, price, FPS estimate, cart transfer and native specification sharing are available. Automatic selection remains a separate path with budget, five tasks, resolution, CPU brand, cooling and optional monitor/peripherals; results transfer back to manual editing. Partial builds follow the website rule: purchasable when selected components are compatible and available. Missing catalogue IDs block purchase until replaced/reset. Final checkout continues to validate live server stock atomically.
+
+The web expert engine generates 2,061 rule vectors consumed by Android instrumentation: sockets, memory, dimensions, cooling, power, warnings, notes, totals and performance estimates. This requested functional correction is the exception to the original visual-only scope.

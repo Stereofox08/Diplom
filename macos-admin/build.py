@@ -26,6 +26,7 @@ html = (source / 'admin.html').read_text()
 html = html.replace('  <script src="js/app.js"></script>', '  <script src="desktop.js"></script>\n  <script src="js/app.js"></script>')
 html = html.replace('</head>', '<style>a[href="index.html"]{display:none!important}</style></head>')
 (web / 'admin.html').write_text(html)
+shutil.copyfile(source / 'brand-icon.svg', web / 'brand-icon.svg')
 shutil.copyfile(root / 'desktop.js', web / 'desktop.js')
 shutil.copyfile(root / 'Assets' / 'AppIcon.icns', contents / 'Resources' / 'AppIcon.icns')
 with (contents / 'Info.plist').open('wb') as file:

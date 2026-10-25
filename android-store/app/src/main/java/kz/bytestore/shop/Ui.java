@@ -103,7 +103,7 @@ final class Ui {
   static LinearLayout card(Context c) {
     LinearLayout v = column(c);
     v.setPadding(dp(c, 16), dp(c, 16), dp(c, 16), dp(c, 16));
-    v.setBackground(background(c, SURFACE, 16));
+    v.setBackground(background(c, SURFACE, BrandTokens.CARD_RADIUS));
     return v;
   }
 
@@ -113,7 +113,10 @@ final class Ui {
     b.setAllCaps(false);
     b.setTextSize(14);
     b.setTypeface(font(c, 600));
-    b.setTextColor(primary ? BG : TEXT);
+    b.setTextColor(
+        new android.content.res.ColorStateList(
+            new int[][] {new int[] {-android.R.attr.state_enabled}, new int[] {}},
+            new int[] {MUTED, primary ? 0xFFFFFFFF : TEXT}));
     b.setMinHeight(dp(c, BrandTokens.CONTROL_HEIGHT));
     b.setMinimumHeight(dp(c, BrandTokens.CONTROL_HEIGHT));
     b.setPadding(dp(c, 12), dp(c, 4), dp(c, 12), dp(c, 4));
@@ -122,6 +125,9 @@ final class Ui {
         new android.graphics.drawable.StateListDrawable();
     GradientDrawable focused = background(c, base, BrandTokens.CONTROL_RADIUS);
     focused.setStroke(dp(c, 2), primary ? TEXT : ACCENT);
+    states.addState(
+        new int[] {-android.R.attr.state_enabled},
+        background(c, RAISED, BrandTokens.CONTROL_RADIUS));
     states.addState(new int[] {android.R.attr.state_focused}, focused);
     states.addState(new int[] {}, background(c, base, BrandTokens.CONTROL_RADIUS));
     b.setBackground(

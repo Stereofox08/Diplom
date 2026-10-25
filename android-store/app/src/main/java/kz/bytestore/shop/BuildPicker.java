@@ -107,6 +107,57 @@ final class BuildPicker {
     return best;
   }
 
+  static List<JSONObject> pick(
+      JSONObject snapshot,
+      long budget,
+      int purpose,
+      int resolution,
+      int brand,
+      int cooling,
+      boolean monitor,
+      boolean peripherals)
+      throws JSONException {
+    JSONArray source = snapshot.optJSONArray("products"), filtered = new JSONArray();
+    List<JSONObject> extras = new ArrayList<>();
+    for (String slot : new String[] {"monitor", "keyboard", "mouse"}) {
+      if (slot.equals("monitor") ? !monitor : !peripherals) continue;
+      JSONObject cheapest = null;
+      for (int i = 0; i < source.length(); i++) {
+        JSONObject p = source.optJSONObject(i);
+        if (!available(p, BuildRules.category(slot))) continue;
+        if (!slot.equals("monitor") && !specs(p).optString("kind").equals(slot)) continue;
+        if (cheapest == null || p.optLong("price") < cheapest.optLong("price")) cheapest = p;
+      }
+      if (cheapest == null) return new ArrayList<>();
+      extras.add(cheapest);
+      budget -= cheapest.optLong("price");
+    }
+    for (int i = 0; i < source.length(); i++) {
+      JSONObject p = source.optJSONObject(i);
+      if (p == null) continue;
+      String cat = p.optString("categoryId");
+      if (cat.equals("cpu")
+          && brand != 0
+          && !p.optString("brand").equalsIgnoreCase(brand == 1 ? "Intel" : "AMD")) continue;
+      if (cat.equals("cooling")
+          && cooling != 0
+          && !specs(p).optString("type").equals(cooling == 1 ? "air" : "liquid")) continue;
+      if (cat.equals("gpu")
+          && resolution > 0
+          && specs(p).optDouble("score") < (resolution == 1 ? 60 : 84)) continue;
+      filtered.put(p);
+    }
+    JSONObject catalog = new JSONObject();
+    catalog.put("products", filtered);
+    List<JSONObject> result =
+        pick(
+            catalog,
+            budget,
+            purpose == 2 || purpose == 3 ? 2 : purpose == 4 || purpose == 1 ? 1 : 0);
+    if (!result.isEmpty()) result.addAll(extras);
+    return result;
+  }
+
   private static int radiator(String value) {
     java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+").matcher(value);
     int max = 0;
