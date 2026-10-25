@@ -1,0 +1,20 @@
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/brand_primary</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorBackgroundFloating">@color/brand_surface</item>
+        <item name="android:textColorPrimary">@color/brand_text</item>
+        <item name="android:windowBackground">@color/brand_background</item>
+    </style>
+    <style name="AppThemeDark" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">@color/brand_dark_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:colorBackgroundFloating">@color/brand_dark_surface</item>
+        <item name="android:textColorPrimary">@color/brand_dark_text</item>
+        <item name="android:windowBackground">@color/brand_dark_background</item>
+    </style>
+</resources>

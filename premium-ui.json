@@ -2,7 +2,8 @@
   "profile": "product-admin",
   "sourceRoots": [
     "css",
-    "android-store/app/src/main/java"
+    "android-store/app/src/main/java",
+    "android-admin/app/src/main/java"
   ],
   "locale": "ru-KZ",
   "canonicalMap": "UX-CONTRACT.md",

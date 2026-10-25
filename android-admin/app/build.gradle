@@ -1,0 +1,16 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'kz.bytestore.admin'
+ compileSdk 35
+ buildFeatures { buildConfig true }
+ defaultConfig {
+  applicationId 'kz.bytestore.admin'
+  minSdk 26
+  targetSdk 35
+  versionCode 1
+  versionName '1.0.0'
+  testInstrumentationRunner 'kz.bytestore.admin.AdminChecks'
+ }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+if (project.hasProperty('byteStoreBuildDir')) { layout.buildDirectory.set(file(project.property('byteStoreBuildDir'))) }

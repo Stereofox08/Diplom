@@ -48,6 +48,11 @@ for name in ['ic_brand_mark.xml','ic_launcher.xml']:
     value = (ROOT/'design/templates'/name).read_text()
     for role in ['accent','inverse','bg']: value = value.replace('@'+role+'@',native[role])
     outputs['android-store/app/src/main/res/drawable/'+name] = value
+# The staff Android package is an isolated app; shared visual adapters remain canonical.
+for rel,value in list(outputs.items()):
+    if rel.startswith('android-store/app/src/main/') and ('BrandTokens.java' in rel or '/values/' in rel):
+        outputs[rel.replace('android-store/','android-admin/').replace('/shop/','/admin/')] = value.replace('package kz.bytestore.shop;','package kz.bytestore.admin;')
+outputs['android-admin/app/src/main/java/kz/bytestore/admin/Ui.java'] = (ROOT/'android-store/app/src/main/java/kz/bytestore/shop/Ui.java').read_text().replace('package kz.bytestore.shop;','package kz.bytestore.admin;')
 errors = []
 for rel, value in outputs.items():
     p = ROOT/rel
@@ -65,6 +70,13 @@ for font in t['fonts']:
         else:
             dest.parent.mkdir(parents=True,exist_ok=True)
             shutil.copyfile(src,dest)
+for font in t['fonts']:
+    for name in [font['file'],font['license']]:
+        src=ROOT/'css/fonts'/name; dest=ROOT/'android-admin/app/src/main/assets/fonts'/name
+        if check:
+            if not dest.exists() or src.read_bytes()!=dest.read_bytes(): errors.append(str(dest.relative_to(ROOT)))
+        else:
+            dest.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(src,dest)
 if errors:
     print('Token/font drift: '+', '.join(errors))
     sys.exit(1)

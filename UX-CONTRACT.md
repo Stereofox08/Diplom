@@ -58,3 +58,20 @@ Android defaults to manual assembly: eight core slots plus monitor, keyboard, mo
 The web expert engine generates 2,061 rule vectors consumed by Android instrumentation: sockets, memory, dimensions, cooling, power, warnings, notes, totals and performance estimates. This requested functional correction is the exception to the original visual-only scope.
 
 The user explicitly requested Android dark theme after review. This authorizes the local theme selector and persistence; no account/cart/server behavior changes.
+
+## Separate Android staff app — requested 2026-10-25
+
+`android-admin` / `kz.bytestore.admin` is an independent native application, with isolated encrypted session and appearance preferences. Existing server RPCs (`store_snapshot`, `store_command`) remain the only data/permission owners. No database schema or customer-app capability changes are needed. Client checks rely on the server `isAdmin` result, never editable user metadata. Staff data remains memory-only; FLAG_SECURE protects screen capture and recent-app previews.
+
+| Capability | Canonical staff Android owner | Variants / evidence |
+|---|---|---|
+| Form / CRUD | `MainActivity.bind/choice/toggle/collect/command` | Create/edit return to owner list; preserves values on validation/conflict errors; AdminChecks fixture CRUD |
+| Select/Listbox | Android Spinner / AlertDialog | OS-owned geometry and interaction |
+| Search / list state | `MainActivity.list`, section-keyed query map | Local authorized snapshot; clear button, 20-row load-more; no remote search race |
+| Feedback / loading | `MainActivity.feedback/busy/task` | Persistent inline errors, progress bar, duplicate-submit prevention |
+| Destructive confirmation | `MainActivity.confirm` | Object/consequence + cancel; server still owns irreversible transitions |
+| Session | `Store` + existing `Api` protocol adapter | AES-GCM Keystore, isolated package, local-scope logout, no PII cache |
+| Network / conflict | `MainActivity.command/refresh` | Product revision preserved; unknown result blocks resubmit until reconciliation; no automatic write retry |
+| Unsaved edits | `navigate` + memory-only retained state | In-app discard confirmation; rotation retains form values without writing secrets to Bundle/disk |
+
+Product photos use Android's document picker; decoded images are downsampled and encoded as JPEG before sending through the existing product image field. Native admin operations are tested with a fake transport; live checks are read-only apart from creating/revoking the test login session. Default deployment keeps `android-admin` out of GitHub Pages.

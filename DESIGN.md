@@ -111,3 +111,7 @@ Existing chip/CPU line icon shapes and approved launcher icons are retained. Onl
 ## Revised direction after user review
 
 The user rejected a subtle navy recolor. Violet Studio is a visible change: light workspace, violet controls, rounded white merchandise cards with inset image wells, larger editorial headings, numbered native configurator modules and a distinct admin selection plane. Manrope/Inter and the approved logos remain. Android keeps native shopping navigation; manual assembly is now the default. This supersedes earlier Circuit Blue taste decisions.
+
+## Native Android administration
+
+ByteStore Admin is a separate staff product surface. It follows the same Violet Studio palette, Inter/Manrope type and light/dark/system themes. Four stable navigation targets (overview, products, orders, more) replace desktop sidebar density. Stock and order states lead each operational card; edits use labeled native fields with separate safe/destructive actions. The approved copper staff icon distinguishes the launcher from the shopper chip logo. `design/generate.py` generates staff palette/font adapters and the package-local copy of the canonical native `Ui.java`; there is no runtime link to the customer app.

@@ -6,6 +6,7 @@ exclude:
   - macos-admin
   - windows-admin
   - android-store
+  - android-admin
   - supabase
   - tests
   - docs
