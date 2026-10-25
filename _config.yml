@@ -5,6 +5,7 @@ exclude:
   - css/admin.css
   - macos-admin
   - windows-admin
+  - android-store
   - supabase
   - tests
   - docs
