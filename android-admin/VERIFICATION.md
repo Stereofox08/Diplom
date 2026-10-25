@@ -5,6 +5,7 @@
 - Строгий аудит UI и официальный lint DESIGN.md: ошибок/предупреждений нет.
 - Проверки сайта: 76 проверок адаптивности, вход, учебная оплата, подсказки и общий дизайн прошли.
 - Живой сервер: проверены вход существующего администратора, 60 общих товаров, разделы управления и отказ анонимному запросу изменения. Реальные товары, заказы и аккаунты не изменялись.
-- `AdminChecks` собран, но пока НЕ запущен на устройстве. Проверка нативного интерфейса и сценариев CRUD на тестовом транспорте ожидает установки: телефон вернул `INSTALL_FAILED_USER_RESTRICTED` (установка отменена). Подтверждение установки запрошено у пользователя. Поэтому до этого шага нельзя считать проверки приложения на телефоне завершёнными.
+- AdminChecks PASS on device 24117RK2CG: real staff login, encrypted session, 12 native screens, fixture-only CRUD, validation, revision conflicts and uncertain-retry prevention. No live product/order/customer mutations.
+- Native screenshots reviewed. Admin app installed; temporary test package, private login file and test screenshots removed from device.
 
 Готовый APK: `android-admin/dist/ByteStore-Admin-Android.apk` в рабочей папке «Диплом» (вне Git). Рядом сохранена SHA-256.
